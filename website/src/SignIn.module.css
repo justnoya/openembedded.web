@@ -10,9 +10,8 @@
 .card {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    text-align: center;
-    padding: 4rem 3.2rem;
+    align-items: stretch;
+    padding: 3.6rem 3.2rem;
     background: #111215;
     border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 16px;
@@ -24,8 +23,9 @@
 .brand {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 1rem;
-    margin-bottom: 3rem;
+    margin-bottom: 2.8rem;
 }
 
 .brandDot {
@@ -45,22 +45,69 @@
 }
 
 .title {
-    font-size: 2.2rem;
+    font-size: 2rem;
     font-weight: 700;
     color: #fff;
-    margin: 0 0 0.8rem;
+    margin: 0 0 2rem;
+    text-align: center;
     letter-spacing: -0.01em;
 }
 
-.description {
+.error {
+    background: rgba(237, 66, 69, 0.12);
+    border: 1px solid rgba(237, 66, 69, 0.3);
+    border-radius: 8px;
+    color: #ed4245;
+    font-size: 1.3rem;
+    padding: 1rem 1.2rem;
+    margin-bottom: 1.6rem;
+    text-align: center;
+    line-height: 1.4;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-bottom: 1.4rem;
+}
+
+.label {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #b4b7b9;
+}
+
+.input {
+    background: #1e1f24;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    color: #fff;
     font-size: 1.4rem;
-    color: #72767d;
-    line-height: 1.5;
-    margin: 0 0 2.8rem;
+    font-family: inherit;
+    padding: 1rem 1.2rem;
+    outline: none;
+    transition: border-color 0.15s ease;
+    width: 100%;
+    box-sizing: border-box;
+
+    &::placeholder {
+        color: #4e5058;
+    }
+
+    &:focus {
+        border-color: #5865F2;
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
 }
 
 .signInButton {
     width: 100%;
+    margin-top: 0.8rem;
     padding: 1.2rem 2rem;
     background: #5865F2;
     color: #fff;
@@ -69,20 +116,23 @@
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    text-decoration: none;
-    display: block;
     text-align: center;
     transition: background 0.15s ease, box-shadow 0.15s ease;
     box-shadow: 0 4px 20px rgba(88, 101, 242, 0.35);
     font-family: inherit;
 
-    &:hover {
+    &:hover:not(:disabled) {
         background: #4752C4;
         box-shadow: 0 6px 24px rgba(88, 101, 242, 0.5);
     }
 
-    &:active {
+    &:active:not(:disabled) {
         background: #3c45a5;
         box-shadow: 0 2px 10px rgba(88, 101, 242, 0.25);
+    }
+
+    &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
     }
 }
