@@ -38,6 +38,16 @@ export default defineConfig(({command, mode}) => ({
             '/api': {
                 target: 'http://localhost:3001',
                 changeOrigin: true,
+                configure: (proxy) => {
+                    proxy.on('proxyReq', (proxyReq, req) => {
+                        // Forward the original host so Express builds the correct
+                        // redirect_uri for the OIDC flow (Replit validates this)
+                        if (req.headers.host) {
+                            proxyReq.setHeader('X-Forwarded-Host', req.headers.host);
+                        }
+                        proxyReq.setHeader('X-Forwarded-Proto', 'https');
+                    });
+                },
             },
         },
     },

@@ -28,6 +28,16 @@ async function getOidcConfig() {
     return oidcConfig;
 }
 
+// Returns the public base URL of this deployment.
+// Priority: REPLIT_DEV_DOMAIN env var (auto-set by Replit) → X-Forwarded-Host
+// header → Host header. Always uses https in production.
+function getBaseUrl(req) {
+    if (process.env.REPLIT_DEV_DOMAIN) {
+        return `https://${process.env.REPLIT_DEV_DOMAIN}`;
+    }
+    return `${req.protocol}://${req.get('host')}`;
+}
+
 // GET /api/login — initiate OIDC flow (PKCE)
 app.get('/api/login', async (req, res) => {
     try {
@@ -39,7 +49,7 @@ app.get('/api/login', async (req, res) => {
         // Store in cookie session so it survives the OAuth redirect (serverless-safe)
         req.session.pendingAuth = { state, codeVerifier };
 
-        const redirectUri = `${req.protocol}://${req.get('host')}/api/callback`;
+        const redirectUri = `${getBaseUrl(req)}/api/callback`;
         const params = new URLSearchParams({
             response_type: 'code',
             client_id: process.env.REPL_ID,
@@ -68,7 +78,7 @@ app.get('/api/callback', async (req, res) => {
         req.session.pendingAuth = null;
 
         const config = await getOidcConfig();
-        const redirectUri = `${req.protocol}://${req.get('host')}/api/callback`;
+        const redirectUri = `${getBaseUrl(req)}/api/callback`;
 
         const tokenRes = await fetch(config.token_endpoint, {
             method: 'POST',
@@ -114,7 +124,7 @@ app.get('/api/logout', async (req, res) => {
     try {
         if (wasUser) {
             const config = await getOidcConfig();
-            const postLogout = encodeURIComponent(`${req.protocol}://${req.get('host')}`);
+            const postLogout = encodeURIComponent(getBaseUrl(req));
             if (config.end_session_endpoint) {
                 return res.redirect(`${config.end_session_endpoint}?client_id=${process.env.REPL_ID}&post_logout_redirect_uri=${postLogout}`);
             }
