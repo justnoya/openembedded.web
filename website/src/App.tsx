@@ -58,6 +58,7 @@ function App() {
     const dispatch = useDispatch();
     const stateManager = useMemo(() => new DisplaySliceManager(dispatch), [dispatch]);
     const state = useSelector((state: RootState) => state.display.data)
+    const rows = useSelector((state: RootState) => state.display.rows);
     const webhookUrl = useSelector((state: RootState) => state.display.webhookUrl);
     const response = useSelector((state: RootState) => state.display.webhookResponse);
     const showThread = useSelector((state: RootState) => state.display.showThread);
@@ -361,15 +362,57 @@ function App() {
                 dispatch(actions.setKey({key: ['data'], value: []}));
             }}>Clear everything</button></p>
         </div>}
-        <ErrorBoundary fallback={<></>}>
-            <Capsule state={state}
-                     stateManager={stateManager}
-                     stateKey={stateKey}
-                     passProps={passProps}
-                     className={Styles.preview}
-                     errors={errors}
-            />
-        </ErrorBoundary>
+        <div className={Styles.leftPanel}>
+            <div className={Styles.rowSection}>
+                <div className={Styles.rowHeader}>
+                    <div className={Styles.rowHeaderLeft}>
+                        <span className={Styles.rowLabel}>🧱 Components</span>
+                        <span className={Styles.rowBadge}>Row 0</span>
+                    </div>
+                </div>
+                <ErrorBoundary fallback={<></>}>
+                    <Capsule state={state}
+                             stateManager={stateManager}
+                             stateKey={stateKey}
+                             passProps={passProps}
+                             className={Styles.preview}
+                             errors={errors}
+                    />
+                </ErrorBoundary>
+            </div>
+
+            {rows.map((rowData, i) => (
+                <div key={i} className={Styles.rowSection}>
+                    <div className={Styles.rowHeader}>
+                        <div className={Styles.rowHeaderLeft}>
+                            <span className={Styles.rowLabel}>⚡ Integration Handling</span>
+                            <span className={Styles.rowBadge}>Row {i + 1}</span>
+                        </div>
+                        <button
+                            className={Styles.rowRemove}
+                            onClick={() => dispatch(actions.removeRow(i))}
+                        >
+                            ✕ Remove
+                        </button>
+                    </div>
+                    <ErrorBoundary fallback={<></>}>
+                        <Capsule
+                            state={rowData}
+                            stateManager={stateManager}
+                            stateKey={['rows', i] as any}
+                            passProps={passProps}
+                            className={Styles.preview}
+                        />
+                    </ErrorBoundary>
+                </div>
+            ))}
+
+            <div className={Styles.addActionBar}>
+                <button className={Styles.addActionBtn} onClick={() => dispatch(actions.addRow())}>
+                    + Add Action
+                </button>
+            </div>
+        </div>
         <div className={Styles.json}>
             <h1>discord.builders — {t('homepage.title')}</h1>
             <a href="https://github.com/StartITBot/discord.builders" target="_blank"><div className={Styles.badges}>

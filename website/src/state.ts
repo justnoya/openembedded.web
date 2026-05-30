@@ -53,6 +53,7 @@ export const displaySlice = createSlice({
     name: 'display',
     initialState: () => ({
         data: defaultJson as Component[],
+        rows: [] as Component[][],
         isDefault: true,
         webhookUrl: localStorage.getItem("discord.builders__webhookToken") || "", // Toolkit run this function so type is string
         webhookResponse: null as object | null,
@@ -184,7 +185,15 @@ export const displaySlice = createSlice({
 
         setShowThread(state) {
             state.showThread = true;
-        }
+        },
+
+        addRow(state) {
+            state.rows.push([]);
+        },
+
+        removeRow(state, action: PayloadAction<number>) {
+            state.rows.splice(action.payload, 1);
+        },
     }
 })
 export const actions = displaySlice.actions;
