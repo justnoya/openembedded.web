@@ -18,6 +18,7 @@ import { supportedLngs } from '../libs.config';
 import { ActionMenuComponent } from './ActionMenu';
 import { useButtonActions, STEP_LABELS, STEP_ICONS, stepSummary } from './ButtonActionsContext';
 import { BotChannelSelector } from './BotChannelSelector';
+import { BotGateway, GatewayStatus } from './BotGateway';
 
 
 webhookImplementation.init();
@@ -73,10 +74,21 @@ function App() {
     const [channelId, setChannelId] = useState<string>(
         () => localStorage.getItem('discord.builders__channelId') || ''
     );
-    const [botResponse,    setBotResponse]    = useState<object | null>(null);
-    const [botStartedAt,   setBotStartedAt]   = useState<number>(0);
-    const [botConnecting,  setBotConnecting]  = useState<boolean>(false);
-    const [botConnected,   setBotConnected]   = useState<boolean>(false);
+    const [botResponse,       setBotResponse]       = useState<object | null>(null);
+    const [botConnecting,     setBotConnecting]     = useState<boolean>(false);
+    const [botConnectError,   setBotConnectError]   = useState<string | null>(null);
+    const [botGuilds,         setBotGuilds]         = useState<{id:string;name:string;icon:string|null}[]>([]);
+    const [botSelectedGuild,  setBotSelectedGuild]  = useState<string>(
+        () => localStorage.getItem('discord.builders__guildId') || ''
+    );
+    const [botChannels,       setBotChannels]       = useState<{id:string;name:string;type:number;parent_id:string|null;position:number}[]>([]);
+    const [chLoading,         setChLoading]         = useState<boolean>(false);
+    const [gatewayStatus,     setGatewayStatus]     = useState<GatewayStatus>('disconnected');
+    const [gatewayError,      setGatewayError]      = useState<string | null>(null);
+    const gateway = useRef<BotGateway | null>(null);
+
+    // disconnect gateway on unmount
+    useEffect(() => () => { gateway.current?.disconnect(); }, []);
 
     useEffect(() => {
         const t = setTimeout(() => localStorage.setItem('discord.builders__botToken', botToken), 500);
@@ -161,6 +173,68 @@ function App() {
         const error_data = await req.json();
         dispatch(actions.setWebhookResponse(error_data))
     }
+
+    const discordGet = async (path: string, token: string) => {
+        const res = await fetch(`https://discord.com/api/v10${path}`, {
+            headers: { Authorization: `Bot ${token.trim()}` },
+        });
+        if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            throw new Error(body?.message || `Discord API error ${res.status}`);
+        }
+        return res.json();
+    };
+
+    const connectBot = async () => {
+        const token = botToken.trim();
+        if (!token) return;
+        setBotConnecting(true);
+        setBotConnectError(null);
+        setBotGuilds([]);
+        setBotChannels([]);
+        setChannelId('');
+        setGatewayStatus('connecting');
+        setGatewayError(null);
+
+        // 1. Connect to Discord Gateway (makes bot appear online)
+        if (!gateway.current) {
+            gateway.current = new BotGateway((status, err) => {
+                setGatewayStatus(status);
+                if (err) setGatewayError(err);
+            });
+        }
+        gateway.current.connect(token);
+
+        // 2. Fetch guild list via REST so user can pick server + channel
+        try {
+            const data = await discordGet('/users/@me/guilds', token);
+            const sorted = [...data].sort((a: any, b: any) => a.name.localeCompare(b.name));
+            setBotGuilds(sorted);
+        } catch (e: any) {
+            setBotConnectError(e?.message || 'Failed to load servers. Check your bot token.');
+            gateway.current?.disconnect();
+        } finally {
+            setBotConnecting(false);
+        }
+    };
+
+    const selectGuild = async (guildId: string) => {
+        setBotSelectedGuild(guildId);
+        localStorage.setItem('discord.builders__guildId', guildId);
+        setBotChannels([]);
+        setChannelId('');
+        if (!guildId) return;
+        setChLoading(true);
+        try {
+            const data = await discordGet(`/guilds/${guildId}/channels`, botToken);
+            const sorted = [...data].sort((a: any, b: any) => a.position - b.position);
+            setBotChannels(sorted);
+        } catch (e: any) {
+            setBotConnectError(e?.message || 'Failed to load channels.');
+        } finally {
+            setChLoading(false);
+        }
+    };
 
     const sendViaBot = async () => {
         setBotResponse(null);
@@ -283,13 +357,16 @@ function App() {
                                 }}>{JSON.stringify(response, undefined, 4)}</div>}
 
             {/* ── Bot Connection ── */}
-            <p style={{marginBottom: '0.5rem', marginTop: '3rem'}}>
+            <p style={{marginBottom: '0.5rem', marginTop: '3rem', display: 'flex', alignItems: 'center', gap: '0.6rem'}}>
                 <span style={{fontSize: 16, color: 'white', fontWeight: '500'}}>Connect a Bot</span>
-                {botConnected && (
-                    <span style={{
-                        marginLeft: '0.75rem', fontSize: 12, color: '#3ba55d',
-                        fontWeight: 600, verticalAlign: 'middle',
-                    }}>● Connected</span>
+                {gatewayStatus === 'connecting' && (
+                    <span style={{fontSize: 12, color: '#faa61a', fontWeight: 600}}>● Connecting…</span>
+                )}
+                {gatewayStatus === 'connected' && (
+                    <span style={{fontSize: 12, color: '#3ba55d', fontWeight: 600}}>● Online</span>
+                )}
+                {gatewayStatus === 'error' && (
+                    <span style={{fontSize: 12, color: '#ed4245', fontWeight: 600}}>● Error</span>
                 )}
             </p>
 
@@ -301,32 +378,57 @@ function App() {
                 placeholder="Paste your bot token here"
                 type="password"
                 value={botToken}
-                onChange={ev => { setBotToken(ev.target.value); setBotConnected(false); }}
+                onChange={ev => {
+                    setBotToken(ev.target.value);
+                    setBotGuilds([]);
+                    setBotConnectError(null);
+                    setGatewayStatus('disconnected');
+                    setGatewayError(null);
+                    gateway.current?.disconnect();
+                }}
                 style={{marginBottom: '0.75rem'}}
+                onKeyDown={ev => { if (ev.key === 'Enter' && botToken.trim()) connectBot(); }}
             />
 
             <button
                 className={Styles.button}
-                disabled={!botToken.trim() || botConnecting}
-                onClick={() => {
-                    setBotConnected(false);
-                    setBotStartedAt(Date.now());
-                }}
-                style={{width: '100%', marginBottom: '0.25rem'}}
+                disabled={!botToken.trim() || botConnecting || gatewayStatus === 'connecting'}
+                onClick={connectBot}
+                style={{width: '100%', marginBottom: '0.5rem'}}
             >
-                {botConnecting ? 'Connecting…' : botConnected ? 'Restart Bot' : 'Start Bot'}
+                {botConnecting || gatewayStatus === 'connecting'
+                    ? 'Starting…'
+                    : gatewayStatus === 'connected'
+                    ? 'Restart Bot'
+                    : 'Start Bot'}
             </button>
 
+            {(botConnectError || gatewayError) && (
+                <p style={{color: '#ed4245', fontSize: 13, marginBottom: '0.5rem'}}>
+                    ⚠ {botConnectError || gatewayError}
+                </p>
+            )}
+
+            {gatewayStatus === 'connected' && (
+                <p style={{color: '#3ba55d', fontSize: 13, marginBottom: '0.5rem'}}>
+                    ✓ Bot is online in Discord. It will go offline when you close this page.
+                </p>
+            )}
+
             <BotChannelSelector
-                botToken={botToken}
+                guilds={botGuilds}
+                channels={botChannels}
+                selectedGuildId={botSelectedGuild}
                 channelId={channelId}
-                onChannelChange={setChannelId}
-                startTrigger={botStartedAt}
-                onLoadingChange={setBotConnecting}
-                onConnected={setBotConnected}
+                chLoading={chLoading}
+                onGuildChange={selectGuild}
+                onChannelChange={id => {
+                    setChannelId(id);
+                    localStorage.setItem('discord.builders__channelId', id);
+                }}
             />
 
-            {botConnected && channelId && (
+            {gatewayStatus === 'connected' && channelId && (
                 <div style={{marginTop: '1rem'}}>
                     <button
                         className={Styles.button}
