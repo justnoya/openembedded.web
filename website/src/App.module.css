@@ -53,106 +53,13 @@
     }
   }
 
-  .leftPanel {
-    grid-area: left;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .rowSection {
-    display: flex;
-    flex-direction: column;
-    border-bottom: 2px solid rgba(255, 255, 255, 0.07);
-
-    &:last-of-type {
-      border-bottom: none;
-    }
-  }
-
-  .rowHeader {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.7rem 1.4rem;
-    background: #111214;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-    gap: 0.8rem;
-  }
-
-  .rowHeaderLeft {
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-  }
-
-  .rowLabel {
-    font-size: 1.2rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-    color: #b5bac1;
-  }
-
-  .rowBadge {
-    font-size: 1.0rem;
-    font-weight: 600;
-    background: rgba(88, 101, 242, 0.18);
-    color: #7983f5;
-    border-radius: 3px;
-    padding: 0.2rem 0.6rem;
-    letter-spacing: 0.3px;
-  }
-
-  .rowRemove {
-    background: none;
-    border: 1px solid rgba(237, 66, 69, 0.35);
-    border-radius: 4px;
-    color: #6d6f78;
-    font-size: 1.1rem;
-    padding: 0.3rem 0.8rem;
-    cursor: pointer;
-    font-family: inherit;
-    transition: color 0.15s, border-color 0.15s;
-
-    &:hover {
-      color: #ed4245;
-      border-color: #ed4245;
-    }
-  }
-
-  .addActionBar {
-    padding: 1.2rem 1.4rem;
-    background: #111214;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
-  }
-
-  .addActionBtn {
-    width: 100%;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px dashed rgba(88, 101, 242, 0.45);
-    border-radius: 4px;
-    color: #7983f5;
-    padding: 0.9rem 1.2rem;
-    font-size: 1.3rem;
-    font-weight: 600;
-    cursor: pointer;
-    font-family: inherit;
-    text-align: center;
-    transition: background 0.15s, border-color 0.15s, color 0.15s;
-
-    &:hover {
-      background: rgba(88, 101, 242, 0.1);
-      border-color: #5865f2;
-      color: #fff;
-    }
-  }
-
   .preview {
+    grid-area: left;
     border-radius: 0;
-    min-height: 30vh;
+    min-height: 100vh;
 
     @media (max-width: 1200px) {
-      min-height: 30vh;
+      min-height: 50vh;
     }
   }
   .json {
