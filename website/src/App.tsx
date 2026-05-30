@@ -18,7 +18,7 @@ import { supportedLngs } from '../libs.config';
 import { ActionMenuComponent } from './ActionMenu';
 import { useButtonActions, STEP_LABELS, STEP_ICONS, stepSummary } from './ButtonActionsContext';
 import { BotChannelSelector } from './BotChannelSelector';
-import { BotGateway, GatewayStatus } from './BotGateway';
+type GatewayStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
 
 
 webhookImplementation.init();
@@ -85,10 +85,40 @@ function App() {
     const [chLoading,         setChLoading]         = useState<boolean>(false);
     const [gatewayStatus,     setGatewayStatus]     = useState<GatewayStatus>('disconnected');
     const [gatewayError,      setGatewayError]      = useState<string | null>(null);
-    const gateway = useRef<BotGateway | null>(null);
+    const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-    // disconnect gateway on unmount
-    useEffect(() => () => { gateway.current?.disconnect(); }, []);
+    // On mount: check if bot is already running server-side (survives page refresh)
+    useEffect(() => {
+        fetch('/api/bot/status')
+            .then(r => r.json())
+            .then((data: any) => {
+                if (data.status === 'connected' || data.status === 'connecting') {
+                    setGatewayStatus(data.status);
+                    if (data.guilds?.length) setBotGuilds(data.guilds);
+                    startPolling();
+                }
+            })
+            .catch(() => {});
+        return () => { if (pollRef.current) clearInterval(pollRef.current); };
+    }, []);
+
+    const startPolling = () => {
+        if (pollRef.current) clearInterval(pollRef.current);
+        pollRef.current = setInterval(async () => {
+            try {
+                const res = await fetch('/api/bot/status');
+                const data: any = await res.json();
+                setGatewayStatus(data.status);
+                if (data.error) setGatewayError(data.error);
+                if (data.guilds?.length) setBotGuilds(data.guilds);
+                // Stop polling once terminal state reached
+                if (data.status === 'error' || data.status === 'disconnected') {
+                    clearInterval(pollRef.current!);
+                    pollRef.current = null;
+                }
+            } catch { /* network blip — keep polling */ }
+        }, 2000);
+    };
 
     useEffect(() => {
         const t = setTimeout(() => localStorage.setItem('discord.builders__botToken', botToken), 500);
@@ -174,17 +204,6 @@ function App() {
         dispatch(actions.setWebhookResponse(error_data))
     }
 
-    const discordGet = async (path: string, token: string) => {
-        const res = await fetch(`https://discord.com/api/v10${path}`, {
-            headers: { Authorization: `Bot ${token.trim()}` },
-        });
-        if (!res.ok) {
-            const body = await res.json().catch(() => ({}));
-            throw new Error(body?.message || `Discord API error ${res.status}`);
-        }
-        return res.json();
-    };
-
     const connectBot = async () => {
         const token = botToken.trim();
         if (!token) return;
@@ -196,26 +215,35 @@ function App() {
         setGatewayStatus('connecting');
         setGatewayError(null);
 
-        // 1. Connect to Discord Gateway (makes bot appear online)
-        if (!gateway.current) {
-            gateway.current = new BotGateway((status, err) => {
-                setGatewayStatus(status);
-                if (err) setGatewayError(err);
-            });
-        }
-        gateway.current.connect(token);
-
-        // 2. Fetch guild list via REST so user can pick server + channel
         try {
-            const data = await discordGet('/users/@me/guilds', token);
-            const sorted = [...data].sort((a: any, b: any) => a.name.localeCompare(b.name));
-            setBotGuilds(sorted);
+            const res = await fetch('/api/bot/start', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token }),
+            });
+            const data: any = await res.json();
+            if (!res.ok) {
+                setBotConnectError(data.error || 'Failed to start bot.');
+                setGatewayStatus('error');
+                return;
+            }
+            if (data.guilds?.length) setBotGuilds(data.guilds);
+            startPolling();
         } catch (e: any) {
-            setBotConnectError(e?.message || 'Failed to load servers. Check your bot token.');
-            gateway.current?.disconnect();
+            setBotConnectError(e?.message || 'Network error — is the bot server running?');
+            setGatewayStatus('error');
         } finally {
             setBotConnecting(false);
         }
+    };
+
+    const disconnectBot = async () => {
+        if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+        setGatewayStatus('disconnected');
+        setGatewayError(null);
+        setBotGuilds([]);
+        setBotChannels([]);
+        fetch('/api/bot/stop', { method: 'POST' }).catch(() => {});
     };
 
     const selectGuild = async (guildId: string) => {
@@ -226,9 +254,10 @@ function App() {
         if (!guildId) return;
         setChLoading(true);
         try {
-            const data = await discordGet(`/guilds/${guildId}/channels`, botToken);
-            const sorted = [...data].sort((a: any, b: any) => a.position - b.position);
-            setBotChannels(sorted);
+            const res = await fetch(`/api/bot/guilds/${guildId}/channels`);
+            const data: any = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to load channels.');
+            setBotChannels(data);
         } catch (e: any) {
             setBotConnectError(e?.message || 'Failed to load channels.');
         } finally {
@@ -239,24 +268,16 @@ function App() {
     const sendViaBot = async () => {
         setBotResponse(null);
         try {
-            const body = JSON.stringify({ components: state, flags: 32768 });
-            const req = await fetch(
-                `https://discord.com/api/v10/channels/${channelId.trim()}/messages`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bot ${botToken.trim()}`,
-                    },
-                    body,
-                }
-            );
-            const status_code = req.status;
-            if (status_code === 200 || status_code === 201) {
-                setBotResponse({ status: `${status_code} Success` });
+            const res = await fetch(`/api/bot/channels/${channelId.trim()}/messages`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ components: state, flags: 32768 }),
+            });
+            const data: any = await res.json().catch(() => null);
+            if (res.ok) {
+                setBotResponse({ status: `${res.status} Success` });
             } else {
-                const error_data = await req.json();
-                setBotResponse(error_data);
+                setBotResponse(data || { error: `HTTP ${res.status}` });
             }
         } catch (e: any) {
             setBotResponse({ error: e?.message || 'Network error' });
@@ -384,24 +405,35 @@ function App() {
                     setBotConnectError(null);
                     setGatewayStatus('disconnected');
                     setGatewayError(null);
-                    gateway.current?.disconnect();
+                    disconnectBot();
                 }}
                 style={{marginBottom: '0.75rem'}}
                 onKeyDown={ev => { if (ev.key === 'Enter' && botToken.trim()) connectBot(); }}
             />
 
-            <button
-                className={Styles.button}
-                disabled={!botToken.trim() || botConnecting || gatewayStatus === 'connecting'}
-                onClick={connectBot}
-                style={{width: '100%', marginBottom: '0.5rem'}}
-            >
-                {botConnecting || gatewayStatus === 'connecting'
-                    ? 'Starting…'
-                    : gatewayStatus === 'connected'
-                    ? 'Restart Bot'
-                    : 'Start Bot'}
-            </button>
+            <div style={{display: 'flex', gap: '0.5rem', marginBottom: '0.5rem'}}>
+                <button
+                    className={Styles.button}
+                    disabled={!botToken.trim() || botConnecting || gatewayStatus === 'connecting'}
+                    onClick={connectBot}
+                    style={{flex: 1}}
+                >
+                    {botConnecting || gatewayStatus === 'connecting'
+                        ? 'Starting…'
+                        : gatewayStatus === 'connected'
+                        ? 'Restart Bot'
+                        : 'Start Bot'}
+                </button>
+                {gatewayStatus === 'connected' && (
+                    <button
+                        className={Styles.button}
+                        onClick={disconnectBot}
+                        style={{background: '#4f545c'}}
+                    >
+                        Stop Bot
+                    </button>
+                )}
+            </div>
 
             {(botConnectError || gatewayError) && (
                 <p style={{color: '#ed4245', fontSize: 13, marginBottom: '0.5rem'}}>
@@ -411,7 +443,7 @@ function App() {
 
             {gatewayStatus === 'connected' && (
                 <p style={{color: '#3ba55d', fontSize: 13, marginBottom: '0.5rem'}}>
-                    ✓ Bot is online in Discord. It will go offline when you close this page.
+                    ✓ Bot is online in Discord. It stays online as long as this app is running — even if you close this tab.
                 </p>
             )}
 
