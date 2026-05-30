@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import ReactSelect from 'react-select';
 import { ActionMenuProps } from 'components-sdk/src/polyfills/ActionMenu';
 import {
     useButtonActions,
@@ -11,9 +10,45 @@ import {
     stepSummary,
     newStepId,
 } from './ButtonActionsContext';
-import { select_styles } from './Select';
 import Styles from './ActionMenu.module.css';
 import { useResponseBuilder } from './ResponseBuilderContext';
+
+/* ── Icon imports (same icons used by CapsuleButton) ── */
+import TextDisplayIcon  from '../../components-sdk/src/icons/TextDisplay.svg';
+import ContainerIcon    from '../../components-sdk/src/icons/Container.svg';
+import DefaultActiveIcon from '../../components-sdk/src/icons/DefaultActive.svg';
+import LockActiveIcon   from '../../components-sdk/src/icons/LockActive.svg';
+import ActionIcon       from '../../components-sdk/src/icons/Action.svg';
+import EditIcon         from '../../components-sdk/src/icons/Edit.svg';
+import TrashIcon        from '../../components-sdk/src/icons/Trash.svg';
+import ButtonIconSvg    from '../../components-sdk/src/icons/Button.svg';
+import ButtonLinkIcon   from '../../components-sdk/src/icons/ButtonLink.svg';
+import MediaGalleryIcon from '../../components-sdk/src/icons/MediaGallery.svg';
+import UploadIcon       from '../../components-sdk/src/icons/Upload.svg';
+import SeparatorIcon    from '../../components-sdk/src/icons/Separator.svg';
+import SelectIcon       from '../../components-sdk/src/icons/Select.svg';
+
+/* ── Action type → icon mapping ── */
+const ACTION_ICONS: Record<InteractionStepType, string> = {
+    reply:          TextDisplayIcon,
+    reply_embed:    ContainerIcon,
+    give_role:      DefaultActiveIcon,
+    remove_role:    LockActiveIcon,
+    send_channel:   ActionIcon,
+    dm_user:        EditIcon,
+    delete_message: TrashIcon,
+};
+
+/* ── Component sub-picker items (for embed/container response) ── */
+const EMBED_COMPONENTS = [
+    { key: 'button',      icon: ButtonIconSvg,    label: 'Button' },
+    { key: 'button-link', icon: ButtonLinkIcon,   label: 'Button link' },
+    { key: 'container',   icon: ContainerIcon,    label: 'Container' },
+    { key: 'image',       icon: MediaGalleryIcon, label: 'Image' },
+    { key: 'file',        icon: UploadIcon,       label: 'File' },
+    { key: 'separator',   icon: SeparatorIcon,    label: 'Separator' },
+    { key: 'select',      icon: SelectIcon,       label: 'Select menu' },
+];
 
 const ALL_TYPES: InteractionStepType[] = [
     'reply',
@@ -24,41 +59,6 @@ const ALL_TYPES: InteractionStepType[] = [
     'dm_user',
     'delete_message',
 ];
-
-/* ── select styles tuned for the dark 1c1d20 editor background ── */
-const editorSelectStyles: typeof select_styles = {
-    ...select_styles,
-    control: (p) => ({
-        ...(select_styles.control as Function)(p, {}),
-        background: '#2f3136',
-        border: '1px solid rgba(255,255,255,0.1)',
-        boxShadow: '0 0 2px rgba(0,0,0,0.4)',
-        minHeight: '3.6rem',
-        cursor: 'pointer',
-    }),
-    valueContainer: (p) => ({
-        padding: '0.4rem 1.2rem',
-    }),
-    singleValue: (p) => ({
-        color: '#dcddde',
-        fontSize: '1.4rem',
-    }),
-    input: (p) => ({
-        color: '#dcddde',
-        fontSize: '1.4rem',
-    }),
-    menu: (p) => ({
-        ...(select_styles.menu as Function)(p, {}),
-        zIndex: 999,
-        fontSize: '1.3rem',
-    }),
-    option: (p, state) => ({
-        ...(select_styles.option as Function)(p, state),
-        fontSize: '1.3rem',
-        padding: '0.7rem 1rem',
-        margin: '2px 0',
-    }),
-};
 
 function needsContent(type: InteractionStepType) {
     return type === 'reply' || type === 'reply_embed' || type === 'send_channel' || type === 'dm_user';
@@ -72,7 +72,6 @@ function blankStep(type: InteractionStepType): InteractionStep {
     return { id: newStepId(), type, content: '', ephemeral: false, roleId: '', channelId: '', embedJson: '' };
 }
 
-/* ── Step Editor ── */
 function embedSummary(embedJson: string | undefined): string {
     if (!embedJson) return '';
     try {
@@ -84,6 +83,69 @@ function embedSummary(embedJson: string | undefined): string {
     return '';
 }
 
+/* ── Shared dropdown card item (matches CapsuleButton exactly) ── */
+function CtxItem({ icon, label, onClick, separator }: { icon: string; label: string; onClick: () => void; separator?: boolean }) {
+    return (
+        <div
+            className={Styles.ctxItem + (separator ? ' ' + Styles.ctxItemSeparator : '')}
+            onClick={onClick}
+        >
+            <div className={Styles.ctxItemImg}>
+                <img src={icon} alt="" />
+            </div>
+            <div className={Styles.ctxItemText}>{label}</div>
+        </div>
+    );
+}
+
+/* ── Action type picker — first level ── */
+function ActionTypePicker({ onPick, onPickEmbed, onCancel }: {
+    onPick: (type: InteractionStepType) => void;
+    onPickEmbed: () => void;
+    onCancel: () => void;
+}) {
+    return (
+        <div className={Styles.ctxCard}>
+            {ALL_TYPES.map((t) => (
+                <CtxItem
+                    key={t}
+                    icon={ACTION_ICONS[t]}
+                    label={STEP_LABELS[t]}
+                    onClick={() => t === 'reply_embed' ? onPickEmbed() : onPick(t)}
+                    separator={t === 'give_role'}
+                />
+            ))}
+            <div className={Styles.ctxCancelRow}>
+                <button className={Styles.ctxCancelBtn} onClick={onCancel}>Cancel</button>
+            </div>
+        </div>
+    );
+}
+
+/* ── Embed component sub-picker — second level ── */
+function EmbedComponentPicker({ onSelect, onBack }: {
+    onSelect: () => void;
+    onBack: () => void;
+}) {
+    return (
+        <div className={Styles.ctxCard}>
+            <div className={Styles.ctxHeader}>
+                <button className={Styles.ctxBackBtn} onClick={onBack}>‹ Back</button>
+                <span className={Styles.ctxHeaderLabel}>Embed / Container components</span>
+            </div>
+            {EMBED_COMPONENTS.map((comp) => (
+                <CtxItem
+                    key={comp.key}
+                    icon={comp.icon}
+                    label={comp.label}
+                    onClick={onSelect}
+                />
+            ))}
+        </div>
+    );
+}
+
+/* ── Step editor (shown after picking an action type) ── */
 function StepEditor({
     initial,
     onSave,
@@ -97,7 +159,6 @@ function StepEditor({
 }) {
     const [step, setStep] = useState<InteractionStep>(initial);
     const set = (patch: Partial<InteractionStep>) => setStep(prev => ({ ...prev, ...patch }));
-    const changeType = (type: InteractionStepType) => setStep({ ...blankStep(type), id: step.id });
     const openResponseBuilder = useResponseBuilder();
 
     const valid = () => {
@@ -108,25 +169,13 @@ function StepEditor({
         return !!(step.content?.trim());
     };
 
-    const selectedType = ALL_TYPES.find(o => o === step.type) ?? null;
     const summary = embedSummary(step.embedJson);
 
     return (
         <div className={Styles.editor}>
-            <p className={Styles.editorTitle}>{title}</p>
-
-            <label className={Styles.label} style={{ marginTop: 0 }}>Action type</label>
-            <div className={Styles.typePicker}>
-                {ALL_TYPES.map(t => (
-                    <div
-                        key={t}
-                        className={Styles.typePickerItem + (step.type === t ? ' ' + Styles.typePickerItemActive : '')}
-                        onClick={() => changeType(t)}
-                    >
-                        <span className={Styles.typePickerIcon}>{STEP_ICONS[t]}</span>
-                        <span className={Styles.typePickerLabel}>{STEP_LABELS[t]}</span>
-                    </div>
-                ))}
+            <div className={Styles.editorTitleRow}>
+                <span className={Styles.editorTypeIcon}>{STEP_ICONS[step.type]}</span>
+                <p className={Styles.editorTitle}>{STEP_LABELS[step.type]}</p>
             </div>
 
             {needsContent(step.type) && <>
@@ -142,9 +191,7 @@ function StepEditor({
 
             {needsEmbed(step.type) && <>
                 <label className={Styles.label}>Response layout (optional)</label>
-                {summary && (
-                    <p className={Styles.embedPreview}>✓ {summary}</p>
-                )}
+                {summary && <p className={Styles.embedPreview}>✓ {summary}</p>}
                 <button
                     type="button"
                     className={Styles.designBtn}
@@ -153,16 +200,12 @@ function StepEditor({
                     {summary ? '✏️  Edit Response Layout' : '🧩  Design Response Layout'}
                 </button>
                 {summary && (
-                    <button
-                        type="button"
-                        className={Styles.clearEmbedBtn}
-                        onClick={() => set({ embedJson: '' })}
-                    >
+                    <button type="button" className={Styles.clearEmbedBtn} onClick={() => set({ embedJson: '' })}>
                         Clear layout
                     </button>
                 )}
                 <p className={Styles.hint}>
-                    Use the visual builder to design the container or embed shown when the button is clicked.
+                    Use the visual builder to design the container or embed shown when clicked.
                 </p>
             </>}
 
@@ -206,29 +249,6 @@ function StepEditor({
                     Apply
                 </button>
             </div>
-        </div>
-    );
-}
-
-/* ── Action Type Picker (shown when "+ Add action" is clicked) ── */
-function ActionTypePicker({
-    onPick,
-    onCancel,
-}: {
-    onPick: (type: InteractionStepType) => void;
-    onCancel: () => void;
-}) {
-    return (
-        <div className={Styles.picker}>
-            <p className={Styles.pickerTitle}>Choose an action type</p>
-            {ALL_TYPES.map(t => (
-                <div key={t} className={Styles.pickerItem} onClick={() => onPick(t)}>
-                    <span className={Styles.pickerItemIcon}>{STEP_ICONS[t]}</span>
-                    <span className={Styles.pickerItemLabel}>{STEP_LABELS[t]}</span>
-                    <span className={Styles.pickerItemArrow}>›</span>
-                </div>
-            ))}
-            <button className={Styles.cancelBtnFull} onClick={onCancel}>Cancel</button>
         </div>
     );
 }
@@ -303,11 +323,16 @@ export function ActionMenuComponent({ closeCallback, customId }: ActionMenuProps
 
                 {mode === 'picking' && (
                     <ActionTypePicker
-                        onPick={(type) => {
-                            setPickedType(type);
-                            setMode('adding');
-                        }}
+                        onPick={(type) => { setPickedType(type); setMode('adding'); }}
+                        onPickEmbed={() => setMode('embed-picking')}
                         onCancel={() => setMode('idle')}
+                    />
+                )}
+
+                {mode === 'embed-picking' && (
+                    <EmbedComponentPicker
+                        onSelect={() => { setPickedType('reply_embed'); setMode('adding'); }}
+                        onBack={() => setMode('picking')}
                     />
                 )}
 
