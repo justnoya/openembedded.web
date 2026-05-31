@@ -106,12 +106,9 @@ export function SignIn() {
 
             {/* Logo top-left */}
             <div className={Styles.logo}>
-                <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="28" height="28" rx="6" fill="#5865F2" />
-                    <circle cx="14" cy="14" r="6" fill="white" />
-                    <circle cx="14" cy="14" r="3" fill="#5865F2" />
-                </svg>
-                <span className={Styles.logoText}>OpenEmbedded</span>
+                <div className={Styles.logoWrap}>
+                    <img src="/logo.png" className={Styles.logoImg} alt="OpenEmbedded" draggable={false} />
+                </div>
             </div>
 
             {/* Login card */}

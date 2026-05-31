@@ -57,17 +57,26 @@
     position: absolute;
     top: 2.4rem;
     left: 2.4rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
     z-index: 10;
+    pointer-events: none;
+    user-select: none;
+    line-height: 0;
 }
 
-.logoText {
-    color: #fff;
-    font-size: 1.6rem;
-    font-weight: 700;
-    letter-spacing: -0.01em;
+/* Crop wrapper — hides the transparent padding in the PNG */
+.logoWrap {
+    overflow: hidden;
+    width: 174px;  /* exact content width at display scale */
+    height: 22px;  /* exact content height at display scale */
+}
+
+.logoImg {
+    display: block;
+    width: 212px;
+    height: 212px;
+    /* shift so only the content region (rows 231-283, cols 37-446) is visible */
+    margin-top: -98px;
+    margin-left: -16px;
 }
 
 /* Login card */
