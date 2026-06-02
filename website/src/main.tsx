@@ -23,13 +23,13 @@ function AuthGate() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: '#07080e',
+                background: '#292a2c',
             }}>
                 <div style={{
                     width: '4rem',
                     height: '4rem',
-                    border: '3px solid rgba(88,101,242,0.2)',
-                    borderTopColor: '#5865F2',
+                    border: '5px solid rgba(87,88,230,0.2)',
+                    borderTopColor: '#5758e6',
                     borderRadius: '50%',
                     animation: 'spin 0.7s linear infinite',
                 }} />

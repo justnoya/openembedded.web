@@ -86,4 +86,14 @@ export const select_styles: StylesConfig = {
         ...provided,
         color: '#dcddde'
     }),
+
+    loadingIndicator: (provided) => ({
+        ...provided,
+        color: '#5758e6',
+    }),
+
+    loadingMessage: (provided) => ({
+        ...provided,
+        color: '#5758e6',
+    }),
 }
