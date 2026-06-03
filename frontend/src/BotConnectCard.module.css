@@ -1,7 +1,7 @@
-/* ── Card shell ── */
+/* ─── Card shell ─────────────────────────────────────────────────────────── */
 .card {
   background: #111214;
-  border-radius: 16px;
+  border-radius: 8px;
   overflow: hidden;
   width: 100%;
   margin-top: 16px;
@@ -10,53 +10,19 @@
   font-family: "gg sans", Whitney, "Noto Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
-/* ── Banner ── */
-.banner {
-  height: 60px;
-  background: #292b2f;
-  position: relative;
-  overflow: hidden;
-  transition: background 0.3s ease;
-}
-
-.bannerConnected {
+/* ─── Blurple top section ─────────────────────────────────────────────────── */
+.topSection {
   background: #5865f2;
+  padding: 14px 16px 0;
+  position: relative;
 }
 
-.bannerBubbles {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.bubble1 {
-  position: absolute;
-  width: 120px;
-  height: 120px;
-  background: rgba(255,255,255,0.07);
-  border-radius: 50%;
-  top: -50px;
-  right: -20px;
-}
-
-.bubble2 {
-  position: absolute;
-  width: 80px;
-  height: 80px;
-  background: rgba(255,255,255,0.05);
-  border-radius: 50%;
-  top: 10px;
-  right: 80px;
-}
-
-/* ── Avatar row ── */
-.avatarRow {
+/* ─── Avatar + name row ───────────────────────────────────────────────────── */
+.avatarNameRow {
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  padding: 0 16px;
-  margin-top: -28px;
-  margin-bottom: 8px;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
 }
 
 .avatarWrap {
@@ -66,11 +32,11 @@
 
 .avatar,
 .avatarFallback {
-  width: 56px;
-  height: 56px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  border: 4px solid #111214;
   display: block;
+  flex-shrink: 0;
 }
 
 .avatar {
@@ -78,120 +44,71 @@
 }
 
 .avatarFallback {
-  background: #36393f;
+  background: rgba(0,0,0,0.2);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #72767d;
-  font-size: 22px;
-  font-weight: 700;
+  overflow: hidden;
 }
 
-.avatarFallbackConnected {
-  background: #5865f2;
-  color: #ffffff;
+.avatarFallback img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
 }
 
 .presenceDot {
   position: absolute;
-  bottom: 3px;
-  right: 3px;
-  width: 14px;
-  height: 14px;
+  bottom: 1px;
+  right: 1px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
-  border: 3px solid #111214;
+  border: 2px solid #5865f2;
   transition: background 0.2s ease;
 }
 
-.disconnectBtn {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 5px 12px;
-  background: rgba(242, 63, 67, 0.15);
-  border: 1px solid rgba(242, 63, 67, 0.3);
-  color: #f23f43;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 500;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background 0.1s ease;
-  margin-bottom: 4px;
-}
-
-.disconnectBtn:hover {
-  background: rgba(242, 63, 67, 0.25);
-}
-
-/* ── Profile info ── */
-.profileInfo {
-  padding: 0 16px 10px;
-}
-
-.nameRow {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
 .username {
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 700;
   color: #ffffff;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
   line-height: 1.2;
 }
 
 .botBadge {
-  background: #5865f2;
+  display: inline-block;
+  background: rgba(255,255,255,0.25);
   color: #ffffff;
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.06em;
-  padding: 2px 6px;
+  padding: 2px 5px;
   border-radius: 3px;
   text-transform: uppercase;
-  flex-shrink: 0;
-  margin-top: 2px;
+  margin-left: 5px;
+  vertical-align: middle;
 }
 
-.statusChip {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 12px;
-  font-weight: 500;
-  margin-top: 4px;
-}
-
-.statusDotInline {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-/* ── Activity section (shown when connected) ── */
-.activity {
-  margin: 0 16px 10px;
-  background: rgba(88, 101, 242, 0.12);
-  border: 1px solid rgba(88, 101, 242, 0.2);
-  border-radius: 8px;
-  padding: 10px 12px;
+/* ─── Activity / Send section ─────────────────────────────────────────────── */
+.activitySection {
+  margin-bottom: 12px;
 }
 
 .activityLabel {
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #dcddde;
+  letter-spacing: 0.04em;
+  color: #ffffff;
   margin-bottom: 8px;
 }
 
-.activityRow {
+.activityCard {
+  background: rgba(0,0,0,0.18);
+  border-radius: 6px;
+  padding: 10px 12px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -199,11 +116,14 @@
 
 .activityIcon {
   flex-shrink: 0;
-  width: 44px;
-  height: 44px;
-  border-radius: 8px;
+  width: 52px;
+  height: 52px;
+  border-radius: 6px;
   overflow: hidden;
-  background: #2f3136;
+  background: rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .activityIconImg {
@@ -216,13 +136,9 @@
 .activityIconFallback {
   width: 100%;
   height: 100%;
-  background: #5865f2;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
-  font-weight: 700;
-  color: #fff;
 }
 
 .activityInfo {
@@ -237,95 +153,122 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.3;
 }
 
 .activityDetail {
   font-size: 12px;
-  color: #a3a6aa;
+  color: rgba(255,255,255,0.75);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   margin-top: 2px;
+  line-height: 1.3;
+}
+
+.activityDetail2 {
+  font-size: 12px;
+  color: rgba(255,255,255,0.6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 1px;
+  line-height: 1.3;
 }
 
 .activityPlaceholder {
-  color: #4f545c;
-  font-style: italic;
+  color: rgba(255,255,255,0.45);
 }
 
-.sendBtn {
+.askToJoinBtn {
   flex-shrink: 0;
-  padding: 7px 14px;
-  background: #5865f2;
+  padding: 7px 12px;
+  background: rgba(255,255,255,0.2);
   color: #ffffff;
   border: none;
   border-radius: 4px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  transition: background 0.1s ease;
+  transition: background 0.12s ease;
   white-space: nowrap;
   letter-spacing: -0.01em;
+  align-self: flex-start;
 }
 
-.sendBtn:hover:not(:disabled) { background: #4752c4; }
-.sendBtn:active:not(:disabled) { background: #3c45a5; }
-.sendBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+.askToJoinBtn:hover:not(:disabled) { background: rgba(255,255,255,0.28); }
+.askToJoinBtn:active:not(:disabled) { background: rgba(255,255,255,0.35); }
+.askToJoinBtn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* ── Divider ── */
-.divider {
-  height: 1px;
-  background: rgba(255,255,255,0.06);
-  margin: 0 16px;
+/* disconnected idle state */
+.activityIdle {
+  background: rgba(0,0,0,0.18);
+  border-radius: 6px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-/* ── Tabs ── */
+/* ─── Tabs ────────────────────────────────────────────────────────────────── */
 .tabs {
   display: flex;
-  padding: 0 16px;
-  gap: 4px;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  gap: 0;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  margin-top: 0;
 }
 
 .tabBtn {
-  padding: 10px 12px;
+  flex: 1;
+  padding: 10px 6px;
   background: transparent;
   border: none;
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
-  color: #a3a6aa;
-  font-size: 13px;
+  color: rgba(255,255,255,0.55);
+  font-size: 12px;
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;
   transition: color 0.12s ease, border-color 0.12s ease;
   white-space: nowrap;
+  text-align: center;
   letter-spacing: -0.01em;
+  line-height: 1.2;
 }
 
 .tabBtn:hover:not(:disabled) {
-  color: #dcddde;
+  color: rgba(255,255,255,0.8);
 }
 
 .tabBtn:disabled {
-  color: #4f545c;
+  color: rgba(255,255,255,0.25);
   cursor: not-allowed;
 }
 
 .tabActive {
   color: #ffffff !important;
-  border-bottom-color: #5865f2;
-  font-weight: 600;
+  border-bottom-color: #ffffff;
+  font-weight: 700;
 }
 
-/* ── Tab content area ── */
-.tabContent {
+/* ─── Dark bottom section ─────────────────────────────────────────────────── */
+.bottomSection {
+  background: #1e1f22;
   padding: 14px 16px 16px;
-  background: #111214;
 }
 
-/* ── Connect tab ── */
+.noteLabel {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #8e9297;
+  margin-bottom: 10px;
+}
+
+/* ─── Connect tab ─────────────────────────────────────────────────────────── */
 .connectTab {
   display: flex;
   flex-direction: column;
@@ -344,7 +287,7 @@
 .tokenInput {
   width: 100%;
   padding: 9px 12px;
-  background: #1e1f22;
+  background: #111214;
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 4px;
   color: #dcddde;
@@ -402,7 +345,6 @@
 
 .stopBtn:hover { background: #686d75; }
 
-/* Spinner for connecting state */
 .spinner {
   display: inline-block;
   width: 12px;
@@ -423,10 +365,9 @@
   font-size: 11px;
   color: #4f545c;
   line-height: 1.45;
-  margin-top: 2px;
 }
 
-/* ── Server / Channel selector tab ── */
+/* ─── Server / Channel selector tab ──────────────────────────────────────── */
 .selectorTab {
   display: flex;
   flex-direction: column;
