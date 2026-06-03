@@ -63,20 +63,17 @@
     line-height: 0;
 }
 
-/* Crop wrapper — hides the transparent padding in the PNG */
 .logoWrap {
-    overflow: hidden;
-    width: 174px;  /* exact content width at display scale */
-    height: 22px;  /* exact content height at display scale */
+    display: flex;
+    align-items: center;
 }
 
 .logoImg {
     display: block;
-    width: 212px;
-    height: 212px;
-    /* shift so only the content region (rows 231-283, cols 37-446) is visible */
-    margin-top: -98px;
-    margin-left: -16px;
+    height: 130px;
+    width: auto;
+    mix-blend-mode: screen;
+    margin-top: -2px;
 }
 
 /* Login card */
