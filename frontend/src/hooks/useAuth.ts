@@ -3,6 +3,10 @@ import { useEffect, useState } from 'react';
 export interface AuthUser {
     id: string;
     email?: string | null;
+    provider?: 'password' | 'discord';
+    username?: string | null;
+    avatar?: string | null;
+    discriminator?: string | null;
 }
 
 export function useAuth() {
@@ -26,7 +30,8 @@ export function useAuth() {
     }, []);
 
     const logout = () => {
-        window.location.href = '/api/logout';
+        fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+            .finally(() => { window.location.href = '/'; });
     };
 
     return { user, isLoading, isAuthenticated: !!user, logout };

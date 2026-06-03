@@ -18,6 +18,8 @@ import { supportedLngs } from '../libs.config';
 import { ActionMenuComponent } from './ActionMenu';
 import { useButtonActions, STEP_LABELS, STEP_ICONS, stepSummary } from './ButtonActionsContext';
 import { BotChannelSelector } from './BotChannelSelector';
+import { UserProfile } from './UserProfile';
+import { BotCard } from './BotCard';
 type GatewayStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
 
 

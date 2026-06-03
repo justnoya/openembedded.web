@@ -53,6 +53,7 @@ router.get('/status', (req, res) => {
         error:    botState.error,
         guilds:   botState.guilds,
         hasToken: !!botState.token,
+        botUser:  botState.botUser,
     });
 });
 

@@ -17,6 +17,7 @@ const botState = {
     sessionId:         null,
     resumeGatewayUrl:  null,
     userId:            null,
+    botUser:           null,
 };
 
 let buttonActions = {};
@@ -257,11 +258,18 @@ function gwConnect(token, gatewayUrl = GATEWAY_URL) {
 
             case 0:
                 if (t === 'READY') {
-                    botState.sessionId       = d.session_id;
+                    botState.sessionId        = d.session_id;
                     botState.resumeGatewayUrl = d.resume_gateway_url;
-                    botState.userId          = d.user?.id ?? null;
-                    botState.status          = 'connected';
-                    reconnectAttempts        = 0;
+                    botState.userId           = d.user?.id ?? null;
+                    botState.botUser          = d.user ? {
+                        id:            d.user.id,
+                        username:      d.user.username,
+                        discriminator: d.user.discriminator,
+                        avatar:        d.user.avatar,
+                        bot:           true,
+                    } : null;
+                    botState.status           = 'connected';
+                    reconnectAttempts         = 0;
                     console.log(`[Gateway] Ready! Bot: ${d.user?.username}#${d.user?.discriminator}`);
                 }
                 if (t === 'RESUMED') {
