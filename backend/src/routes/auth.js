@@ -14,7 +14,7 @@ async function initAuth() {
 }
 
 // ── POST /api/auth/login ──────────────────────────────────────────────────────
-// Sends a verification email to any valid email address.
+// Signs the user in directly — no email verification required.
 router.post('/login', async (req, res) => {
     const { email } = req.body || {};
 
@@ -23,35 +23,10 @@ router.post('/login', async (req, res) => {
 
     const inputEmail = email.trim().toLowerCase();
 
-    console.log(`[Auth] Login attempt for "${inputEmail}"`);
+    console.log(`[Auth] Auto sign-in for "${inputEmail}"`);
 
-    // Generate email verification token
-    const token = await createToken(inputEmail);
-    if (!token) {
-        // DB unavailable — fall back to direct session login
-        console.warn('[Auth] DB unavailable, falling back to direct login');
-        req.session.user = { id: inputEmail, email: email.trim(), provider: 'password' };
-        return res.json({ ok: true, direct: true });
-    }
-
-    const appUrl    = buildAppUrl(req);
-    const verifyUrl = `${appUrl}/verify?token=${token}`;
-
-    const html = verificationEmailHtml({ verifyUrl, expiresMinutes: EXPIRES_MINUTES, appUrl });
-    const sent = await sendEmail({
-        to:      email.trim(),
-        subject: 'Verify your OpenEmbedded login',
-        html,
-    });
-
-    if (!sent) {
-        // Email failed — still allow direct login so the app isn't locked out
-        console.warn('[Auth] Email send failed, falling back to direct login');
-        req.session.user = { id: inputEmail, email: email.trim(), provider: 'password' };
-        return res.json({ ok: true, direct: true });
-    }
-
-    res.json({ ok: true, requiresVerification: true, email: email.trim() });
+    req.session.user = { id: inputEmail, email: inputEmail, provider: 'password' };
+    res.json({ ok: true });
 });
 
 // ── GET /api/auth/verify ──────────────────────────────────────────────────────
