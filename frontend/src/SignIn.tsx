@@ -1,12 +1,44 @@
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import Styles from './SignIn.module.css';
 import { InlineAlert } from './InlineAlert';
 
+type View = 'login' | 'check-email' | 'verifying' | 'verify-error';
+
 export function SignIn() {
+    const [view, setView]         = useState<View>('login');
+    const [sentEmail, setSentEmail] = useState('');
     const [email, setEmail]       = useState('');
     const [password, setPassword] = useState('');
     const [error, setError]       = useState('');
     const [loading, setLoading]   = useState(false);
+    const [resent, setResent]     = useState(false);
+    const [verifyError, setVerifyError] = useState('');
+
+    // On mount — if URL has ?token=..., auto-verify
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const token  = params.get('token');
+        if (!token) return;
+
+        setView('verifying');
+        // Clean the token from the URL without a full reload
+        window.history.replaceState({}, '', window.location.pathname);
+
+        fetch(`/api/auth/verify?token=${encodeURIComponent(token)}`, { credentials: 'include' })
+            .then(async res => {
+                const data = await res.json();
+                if (res.ok && data.ok) {
+                    window.location.reload();
+                } else {
+                    setVerifyError(data.error || 'Verification failed. Please sign in again.');
+                    setView('verify-error');
+                }
+            })
+            .catch(() => {
+                setVerifyError('Network error. Please try again.');
+                setView('verify-error');
+            });
+    }, []);
 
     async function handleSubmit(e: FormEvent) {
         e.preventDefault();
@@ -33,7 +65,41 @@ export function SignIn() {
                 return;
             }
 
+            if (data.direct) {
+                // Email service not configured — direct login
+                window.location.reload();
+                return;
+            }
+
+            if (data.requiresVerification) {
+                setSentEmail(email.trim());
+                setView('check-email');
+                return;
+            }
+
             window.location.reload();
+        } catch {
+            setError('Unable to connect. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    async function handleResend() {
+        setResent(false);
+        setLoading(true);
+        try {
+            const res = await fetch('/api/auth/resend', {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ email: sentEmail }),
+            });
+            if (res.ok) setResent(true);
+            else {
+                const data = await res.json();
+                setError(data.error || 'Failed to resend. Please try again.');
+            }
         } catch {
             setError('Unable to connect. Please try again.');
         } finally {
@@ -45,9 +111,8 @@ export function SignIn() {
         window.location.href = '/api/auth/discord';
     }
 
-    return (
-        <div className={Styles.page}>
-            {/* Full-page illustrated nature background */}
+    const background = (
+        <>
             <svg className={Styles.natureBg} viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
                 <defs>
                     <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
@@ -77,25 +142,109 @@ export function SignIn() {
                 <ellipse cx="910" cy="748" rx="9" ry="5" fill="#e8b0c0" />
                 <rect x="907" y="739" width="5" height="12" rx="2" fill="#f0c0c8" />
             </svg>
-
-            {/* Dark organic blob — left side overlay */}
             <svg className={Styles.darkBlob} viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
-                <path
-                    d="M0,0 L840,0 C800,80 860,160 780,240 C720,300 800,380 740,460 C680,540 760,620 700,720 C660,790 720,860 640,900 L0,900 Z"
-                    fill="#1e1f2e"
-                />
+                <path d="M0,0 L840,0 C800,80 860,160 780,240 C720,300 800,380 740,460 C680,540 760,620 700,720 C660,790 720,860 640,900 L0,900 Z" fill="#1e1f2e" />
             </svg>
-
             <div className={Styles.stars} />
-
-            {/* Logo top-left */}
             <div className={Styles.logo}>
                 <div className={Styles.logoWrap}>
                     <img src="/logo.png" className={Styles.logoImg} alt="OpenEmbedded" draggable={false} />
                 </div>
             </div>
+        </>
+    );
 
-            {/* Login card */}
+    // ── View: verifying ───────────────────────────────────────────────────────
+    if (view === 'verifying') {
+        return (
+            <div className={Styles.page}>
+                {background}
+                <div className={Styles.card}>
+                    <div className={Styles.cardLogoWrap}>
+                        <img src="/logo.png" className={Styles.cardLogo} alt="OpenEmbedded" draggable={false} />
+                    </div>
+                    <div className={Styles.inboxIcon}>⏳</div>
+                    <h2 className={Styles.inboxTitle}>Verifying your login…</h2>
+                    <p className={Styles.inboxSubtitle}>Please wait a moment.</p>
+                </div>
+            </div>
+        );
+    }
+
+    // ── View: verify-error ────────────────────────────────────────────────────
+    if (view === 'verify-error') {
+        return (
+            <div className={Styles.page}>
+                {background}
+                <div className={Styles.card}>
+                    <div className={Styles.cardLogoWrap}>
+                        <img src="/logo.png" className={Styles.cardLogo} alt="OpenEmbedded" draggable={false} />
+                    </div>
+                    <div className={Styles.inboxIcon}>❌</div>
+                    <h2 className={Styles.inboxTitle}>Link expired</h2>
+                    <p className={Styles.inboxSubtitle}>{verifyError}</p>
+                    <button className={Styles.loginBtn} style={{ marginTop: '2rem' }} onClick={() => setView('login')}>
+                        Back to sign in
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    // ── View: check-email ─────────────────────────────────────────────────────
+    if (view === 'check-email') {
+        return (
+            <div className={Styles.page}>
+                {background}
+                <div className={Styles.card}>
+                    <div className={Styles.cardLogoWrap}>
+                        <img src="/logo.png" className={Styles.cardLogo} alt="OpenEmbedded" draggable={false} />
+                    </div>
+
+                    <div className={Styles.inboxIcon}>✉️</div>
+                    <h2 className={Styles.inboxTitle}>Check your inbox</h2>
+                    <p className={Styles.inboxSubtitle}>
+                        We sent a verification link to<br />
+                        <strong className={Styles.inboxEmail}>{sentEmail}</strong>
+                    </p>
+
+                    <div className={Styles.inboxNote}>
+                        <span className={Styles.inboxNoteIcon}>⏱️</span>
+                        The link expires in <strong>30 minutes</strong>
+                    </div>
+
+                    {error && (
+                        <InlineAlert type="error" message={error} onDismiss={() => setError('')} className={Styles.formAlert} />
+                    )}
+
+                    {resent && (
+                        <InlineAlert type="success" message="Email resent! Check your inbox." onDismiss={() => setResent(false)} className={Styles.formAlert} />
+                    )}
+
+                    <button
+                        className={Styles.resendBtn}
+                        onClick={handleResend}
+                        disabled={loading}
+                    >
+                        {loading ? 'Sending…' : 'Resend email'}
+                    </button>
+
+                    <button
+                        className={Styles.backBtn}
+                        onClick={() => { setView('login'); setError(''); }}
+                    >
+                        ← Use a different account
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    // ── View: login (default) ─────────────────────────────────────────────────
+    return (
+        <div className={Styles.page}>
+            {background}
+
             <div className={Styles.card}>
                 <div className={Styles.cardLogoWrap}>
                     <img src="/logo.png" className={Styles.cardLogo} alt="OpenEmbedded" draggable={false} />
@@ -140,18 +289,16 @@ export function SignIn() {
                     </div>
 
                     <button className={Styles.loginBtn} type="submit" disabled={loading}>
-                        {loading ? 'Logging in…' : 'Log In'}
+                        {loading ? 'Signing in…' : 'Log In'}
                     </button>
                 </form>
 
-                {/* Divider */}
                 <div className={Styles.divider}>
                     <span className={Styles.dividerLine} />
                     <span className={Styles.dividerText}>or</span>
                     <span className={Styles.dividerLine} />
                 </div>
 
-                {/* Discord OAuth button */}
                 <button
                     className={Styles.discordBtn}
                     type="button"

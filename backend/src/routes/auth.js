@@ -2,6 +2,10 @@ const express = require('express');
 const bcrypt   = require('bcryptjs');
 const crypto   = require('crypto');
 
+const { createToken, consumeToken, pruneExpiredTokens, EXPIRES_MINUTES } = require('../lib/tokens');
+const { sendEmail }              = require('../lib/email');
+const { verificationEmailHtml }  = require('../lib/emailTemplate');
+
 const router = express.Router();
 
 // ── Admin credential hash (set once on startup) ───────────────────────────────
@@ -19,9 +23,13 @@ async function initAuth() {
     adminEmail        = email.toLowerCase();
     adminPasswordHash = await bcrypt.hash(password, 12);
     console.log(`[Auth] Admin credentials loaded for: ${email}`);
+
+    // Clean up leftover tokens on startup
+    pruneExpiredTokens().catch(() => {});
 }
 
 // ── POST /api/auth/login ──────────────────────────────────────────────────────
+// Verifies credentials, generates a 30-min token, sends verification email.
 router.post('/login', async (req, res) => {
     const { email, password } = req.body || {};
 
@@ -37,28 +45,93 @@ router.post('/login', async (req, res) => {
     const passwordMatch = await bcrypt.compare(password, adminPasswordHash);
 
     if (!emailMatch || !passwordMatch) {
-        // Constant-time response to prevent timing attacks
         await bcrypt.compare('dummy', '$2a$12$aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
         return res.status(401).json({ error: 'Invalid email or password.' });
     }
 
+    // Credentials valid — generate email verification token
+    const token = await createToken(email.trim().toLowerCase());
+    if (!token) {
+        // DB unavailable — fall back to direct session login
+        console.warn('[Auth] DB unavailable, falling back to direct login');
+        req.session.user = { id: adminEmail, email: email.trim(), provider: 'password' };
+        return res.json({ ok: true, direct: true });
+    }
+
+    const appUrl    = buildAppUrl(req);
+    const verifyUrl = `${appUrl}/verify?token=${token}`;
+
+    const html = verificationEmailHtml({ verifyUrl, expiresMinutes: EXPIRES_MINUTES, appUrl });
+    const sent = await sendEmail({
+        to:      email.trim(),
+        subject: 'Verify your OpenEmbedded login',
+        html,
+    });
+
+    if (!sent) {
+        // Email failed — still allow direct login so the app isn't locked out
+        console.warn('[Auth] Email send failed, falling back to direct login');
+        req.session.user = { id: adminEmail, email: email.trim(), provider: 'password' };
+        return res.json({ ok: true, direct: true });
+    }
+
+    res.json({ ok: true, requiresVerification: true, email: email.trim() });
+});
+
+// ── GET /api/auth/verify ──────────────────────────────────────────────────────
+// Consumes a verification token and creates a session.
+router.get('/verify', async (req, res) => {
+    const { token } = req.query;
+
+    if (!token || typeof token !== 'string')
+        return res.status(400).json({ error: 'Missing token.' });
+
+    const email = await consumeToken(token);
+
+    if (!email) {
+        return res.status(400).json({ error: 'This link has expired or already been used. Please sign in again.' });
+    }
+
     req.session.user = {
-        id:       adminEmail,
-        email:    email.trim(),
+        id:       email,
+        email,
         provider: 'password',
     };
+
+    console.log(`[Auth] Verified login for: ${email}`);
+    res.json({ ok: true });
+});
+
+// ── POST /api/auth/resend ─────────────────────────────────────────────────────
+// Re-sends the verification email (rate-limited to verified credentials only).
+router.post('/resend', async (req, res) => {
+    const { email } = req.body || {};
+    if (!email || typeof email !== 'string')
+        return res.status(400).json({ error: 'Email is required.' });
+
+    // Only allow resend for the configured admin email
+    if (email.trim().toLowerCase() !== adminEmail)
+        return res.status(400).json({ error: 'Email not recognised.' });
+
+    const token = await createToken(email.trim().toLowerCase());
+    if (!token) return res.status(503).json({ error: 'Service temporarily unavailable.' });
+
+    const appUrl    = buildAppUrl(req);
+    const verifyUrl = `${appUrl}/verify?token=${token}`;
+    const html      = verificationEmailHtml({ verifyUrl, expiresMinutes: EXPIRES_MINUTES, appUrl });
+
+    const sent = await sendEmail({ to: email.trim(), subject: 'Verify your OpenEmbedded login', html });
+    if (!sent) return res.status(503).json({ error: 'Failed to send email. Check GMAIL_USER and GMAIL_APP_PASSWORD secrets.' });
 
     res.json({ ok: true });
 });
 
 // ── GET /api/auth/discord ─────────────────────────────────────────────────────
-// Redirects the user to Discord's OAuth2 authorization page.
 router.get('/discord', (req, res) => {
     const clientId = process.env.DISCORD_CLIENT_ID;
     if (!clientId)
         return res.status(503).send('Discord login is not configured (DISCORD_CLIENT_ID missing).');
 
-    // CSRF state token stored in the session
     const state = crypto.randomBytes(20).toString('hex');
     req.session.oauthState = state;
 
@@ -76,7 +149,6 @@ router.get('/discord', (req, res) => {
 });
 
 // ── GET /api/auth/discord/callback ────────────────────────────────────────────
-// Discord redirects here after the user authorises (or denies) access.
 router.get('/discord/callback', async (req, res) => {
     const { code, state, error } = req.query;
 
@@ -85,7 +157,6 @@ router.get('/discord/callback', async (req, res) => {
         return res.redirect('/?error=discord_denied');
     }
 
-    // Verify CSRF state
     if (!state || state !== req.session.oauthState) {
         console.warn('[Auth/Discord] State mismatch — possible CSRF attempt');
         return res.redirect('/?error=state_mismatch');
@@ -98,7 +169,6 @@ router.get('/discord/callback', async (req, res) => {
         return res.status(503).send('Discord login is not configured.');
 
     try {
-        // Exchange code for access token
         const tokenRes = await fetch('https://discord.com/api/oauth2/token', {
             method:  'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -119,7 +189,6 @@ router.get('/discord/callback', async (req, res) => {
 
         const { access_token, token_type } = await tokenRes.json();
 
-        // Fetch Discord user info
         const userRes = await fetch('https://discord.com/api/users/@me', {
             headers: { Authorization: `${token_type} ${access_token}` },
         });
@@ -166,6 +235,12 @@ function buildRedirectUri(req) {
     const host  = req.headers['x-forwarded-host'] || req.headers.host;
     const proto = req.headers['x-forwarded-proto'] || (req.secure ? 'https' : 'http');
     return `${proto}://${host}/api/auth/discord/callback`;
+}
+
+function buildAppUrl(req) {
+    const host  = req.headers['x-forwarded-host'] || req.headers.host;
+    const proto = req.headers['x-forwarded-proto'] || (req.secure ? 'https' : 'http');
+    return `${proto}://${host}`;
 }
 
 module.exports = { router, initAuth };

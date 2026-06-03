@@ -2361,6 +2361,7 @@ __metadata:
     database: "workspace:*"
     drizzle-orm: "npm:^0.43.1"
     express: "npm:^4.18.2"
+    nodemailer: "npm:^8.0.10"
     postgres: "npm:^3.4.5"
     ws: "npm:^8.16.0"
   languageName: unknown
@@ -5018,6 +5019,13 @@ __metadata:
   version: 2.0.27
   resolution: "node-releases@npm:2.0.27"
   checksum: 10c0/f1e6583b7833ea81880627748d28a3a7ff5703d5409328c216ae57befbced10ce2c991bea86434e8ec39003bd017f70481e2e5f8c1f7e0a7663241f81d6e00e2
+  languageName: node
+  linkType: hard
+
+"nodemailer@npm:^8.0.10":
+  version: 8.0.10
+  resolution: "nodemailer@npm:8.0.10"
+  checksum: 10c0/b96fd2ea7146de58141219061e094509fd0f19aac5ac86ac35d9ce9c479dbf6c12b143fa7e7050a1be539a3542eb59520c33aabf5a119c8d28fc7d151bde329f
   languageName: node
   linkType: hard
 
