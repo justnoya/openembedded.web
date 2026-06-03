@@ -11,6 +11,9 @@ fi
 echo "Installing dependencies..."
 node "$YARN4" install
 
+echo "Building database package..."
+node "$YARN4" workspace database build
+
 echo "Starting bot server..."
 node "$YARN4" workspace backend start &
 BOT_PID=$!
