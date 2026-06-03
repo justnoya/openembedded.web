@@ -8,7 +8,6 @@ export function SignIn() {
     const [view, setView]         = useState<View>('login');
     const [sentEmail, setSentEmail] = useState('');
     const [email, setEmail]       = useState('');
-    const [password, setPassword] = useState('');
     const [error, setError]       = useState('');
     const [loading, setLoading]   = useState(false);
     const [resent, setResent]     = useState(false);
@@ -44,8 +43,8 @@ export function SignIn() {
         e.preventDefault();
         setError('');
 
-        if (!email.trim() || !password) {
-            setError('Please fill in all fields.');
+        if (!email.trim()) {
+            setError('Please enter your email.');
             return;
         }
 
@@ -55,7 +54,7 @@ export function SignIn() {
                 method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
-                body: JSON.stringify({ email: email.trim(), password }),
+                body: JSON.stringify({ email: email.trim() }),
             });
 
             const data = await res.json();
@@ -269,20 +268,6 @@ export function SignIn() {
                             autoComplete="email"
                             value={email}
                             onChange={e => setEmail(e.target.value)}
-                            disabled={loading}
-                            required
-                        />
-                    </div>
-
-                    <div className={Styles.field}>
-                        <label className={Styles.label} htmlFor="password">PASSWORD</label>
-                        <input
-                            id="password"
-                            className={Styles.input}
-                            type="password"
-                            autoComplete="current-password"
-                            value={password}
-                            onChange={e => setPassword(e.target.value)}
                             disabled={loading}
                             required
                         />

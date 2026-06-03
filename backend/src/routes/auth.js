@@ -8,59 +8,29 @@ const { verificationEmailHtml }  = require('../lib/emailTemplate');
 
 const router = express.Router();
 
-// ── Admin credentials (set once on startup) ──────────────────────────────────
-let adminEmail    = null;
-let adminPassword = null;
-
 async function initAuth() {
-    const email    = (process.env.ADMIN_EMAIL    || '').trim();
-    const password = (process.env.ADMIN_PASSWORD || '').trim();
-    if (!email || !password) {
-        console.warn('[Auth] ⚠️  ADMIN_EMAIL and ADMIN_PASSWORD are not set in environment secrets.');
-        console.warn('[Auth] Login will be disabled until both are configured.');
-        return;
-    }
-    adminEmail    = email.toLowerCase();
-    adminPassword = password;
-    console.log(`[Auth] Admin credentials loaded for: ${email} (password length: ${password.length})`);
-
     // Clean up leftover tokens on startup
     pruneExpiredTokens().catch(() => {});
 }
 
 // ── POST /api/auth/login ──────────────────────────────────────────────────────
-// Verifies credentials, generates a 30-min token, sends verification email.
+// Sends a verification email to any valid email address.
 router.post('/login', async (req, res) => {
-    const { email, password } = req.body || {};
+    const { email } = req.body || {};
 
     if (!email || typeof email !== 'string' || !email.trim())
         return res.status(400).json({ error: 'Email is required.' });
-    if (!password || typeof password !== 'string' || !password.trim())
-        return res.status(400).json({ error: 'Password is required.' });
 
-    if (!adminEmail || !adminPassword)
-        return res.status(503).json({ error: 'Login is not configured on this server.' });
+    const inputEmail = email.trim().toLowerCase();
 
-    const inputEmail    = email.trim().toLowerCase();
-    const inputPassword = password.trim();
+    console.log(`[Auth] Login attempt for "${inputEmail}"`);
 
-    const emailMatch    = inputEmail === adminEmail;
-    // Timing-safe comparison to prevent timing attacks
-    const passwordMatch = inputPassword.length === adminPassword.length &&
-        crypto.timingSafeEqual(Buffer.from(inputPassword), Buffer.from(adminPassword));
-
-    console.log(`[Auth] Login attempt for "${inputEmail}" — email match: ${emailMatch}, password match: ${passwordMatch}, pw lengths: req=${inputPassword.length} env=${adminPassword.length}`);
-
-    if (!emailMatch || !passwordMatch) {
-        return res.status(401).json({ error: 'Invalid email or password.' });
-    }
-
-    // Credentials valid — generate email verification token
-    const token = await createToken(email.trim().toLowerCase());
+    // Generate email verification token
+    const token = await createToken(inputEmail);
     if (!token) {
         // DB unavailable — fall back to direct session login
         console.warn('[Auth] DB unavailable, falling back to direct login');
-        req.session.user = { id: adminEmail, email: email.trim(), provider: 'password' };
+        req.session.user = { id: inputEmail, email: email.trim(), provider: 'password' };
         return res.json({ ok: true, direct: true });
     }
 
@@ -77,7 +47,7 @@ router.post('/login', async (req, res) => {
     if (!sent) {
         // Email failed — still allow direct login so the app isn't locked out
         console.warn('[Auth] Email send failed, falling back to direct login');
-        req.session.user = { id: adminEmail, email: email.trim(), provider: 'password' };
+        req.session.user = { id: inputEmail, email: email.trim(), provider: 'password' };
         return res.json({ ok: true, direct: true });
     }
 
@@ -114,10 +84,6 @@ router.post('/resend', async (req, res) => {
     const { email } = req.body || {};
     if (!email || typeof email !== 'string')
         return res.status(400).json({ error: 'Email is required.' });
-
-    // Only allow resend for the configured admin email
-    if (email.trim().toLowerCase() !== adminEmail)
-        return res.status(400).json({ error: 'Email not recognised.' });
 
     const token = await createToken(email.trim().toLowerCase());
     if (!token) return res.status(503).json({ error: 'Service temporarily unavailable.' });
