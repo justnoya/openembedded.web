@@ -55,8 +55,8 @@
 /* Logo top-left */
 .logo {
     position: absolute;
-    top: 2.4rem;
-    left: 2.4rem;
+    top: 0;
+    left: 0;
     z-index: 10;
     pointer-events: none;
     user-select: none;
@@ -91,20 +91,12 @@
     align-items: center;
 }
 
-.title {
-    font-size: 2.4rem;
-    font-weight: 700;
-    color: #fff;
-    margin: 0 0 0.8rem;
-    text-align: center;
-    letter-spacing: -0.01em;
-}
-
-.subtitle {
-    font-size: 1.6rem;
-    color: #b9bbbe;
-    margin: 0 0 2rem;
-    text-align: center;
+.cardLogo {
+    display: block;
+    height: 220px;
+    width: auto;
+    max-width: 440px;
+    margin: -2rem auto 0.4rem;
 }
 
 .error {

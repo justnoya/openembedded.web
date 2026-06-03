@@ -97,8 +97,7 @@ export function SignIn() {
 
             {/* Login card */}
             <div className={Styles.card}>
-                <h1 className={Styles.title}>Welcome back!</h1>
-                <p className={Styles.subtitle}>We're so excited to see you again!</p>
+                <img src="/logo.png" className={Styles.cardLogo} alt="OpenEmbedded" draggable={false} />
 
                 {error && (
                     <InlineAlert
