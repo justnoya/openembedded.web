@@ -28,13 +28,7 @@ app.get('/api/logout', (req, res) => {
     res.redirect('/');
 });
 
-// ── Auth guard for all remaining /api/* routes ────────────────────────────────
-app.use('/api', (req, res, next) => {
-    if (!req.session?.user) return res.status(401).json({ message: 'Unauthorized' });
-    next();
-});
-
-// ── Bot routes ────────────────────────────────────────────────────────────────
+// ── Bot routes (public — no auth required) ───────────────────────────────────
 app.use('/api/bot', botRouter);
 
 // ── Serve built frontend in production ───────────────────────────────────────
