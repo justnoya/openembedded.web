@@ -1,0 +1,463 @@
+/* ── Card shell ── */
+.card {
+  background: #111214;
+  border-radius: 16px;
+  overflow: hidden;
+  width: 100%;
+  margin-top: 16px;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.36), 0 2px 4px rgba(0,0,0,0.24);
+  border: 1px solid rgba(255,255,255,0.06);
+  font-family: "gg sans", Whitney, "Noto Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+/* ── Banner ── */
+.banner {
+  height: 60px;
+  background: #292b2f;
+  position: relative;
+  overflow: hidden;
+  transition: background 0.3s ease;
+}
+
+.bannerConnected {
+  background: #5865f2;
+}
+
+.bannerBubbles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.bubble1 {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 50%;
+  top: -50px;
+  right: -20px;
+}
+
+.bubble2 {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 50%;
+  top: 10px;
+  right: 80px;
+}
+
+/* ── Avatar row ── */
+.avatarRow {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 16px;
+  margin-top: -28px;
+  margin-bottom: 8px;
+}
+
+.avatarWrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.avatar,
+.avatarFallback {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 4px solid #111214;
+  display: block;
+}
+
+.avatar {
+  object-fit: cover;
+}
+
+.avatarFallback {
+  background: #36393f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #72767d;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.avatarFallbackConnected {
+  background: #5865f2;
+  color: #ffffff;
+}
+
+.presenceDot {
+  position: absolute;
+  bottom: 3px;
+  right: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 3px solid #111214;
+  transition: background 0.2s ease;
+}
+
+.disconnectBtn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  background: rgba(242, 63, 67, 0.15);
+  border: 1px solid rgba(242, 63, 67, 0.3);
+  color: #f23f43;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.1s ease;
+  margin-bottom: 4px;
+}
+
+.disconnectBtn:hover {
+  background: rgba(242, 63, 67, 0.25);
+}
+
+/* ── Profile info ── */
+.profileInfo {
+  padding: 0 16px 10px;
+}
+
+.nameRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.username {
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.botBadge {
+  background: #5865f2;
+  color: #ffffff;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 2px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.statusChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-top: 4px;
+}
+
+.statusDotInline {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Activity section (shown when connected) ── */
+.activity {
+  margin: 0 16px 10px;
+  background: rgba(88, 101, 242, 0.12);
+  border: 1px solid rgba(88, 101, 242, 0.2);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.activityLabel {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #dcddde;
+  margin-bottom: 8px;
+}
+
+.activityRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.activityIcon {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #2f3136;
+}
+
+.activityIconImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.activityIconFallback {
+  width: 100%;
+  height: 100%;
+  background: #5865f2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.activityInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.activityName {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.activityDetail {
+  font-size: 12px;
+  color: #a3a6aa;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+.activityPlaceholder {
+  color: #4f545c;
+  font-style: italic;
+}
+
+.sendBtn {
+  flex-shrink: 0;
+  padding: 7px 14px;
+  background: #5865f2;
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.1s ease;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+
+.sendBtn:hover:not(:disabled) { background: #4752c4; }
+.sendBtn:active:not(:disabled) { background: #3c45a5; }
+.sendBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── Divider ── */
+.divider {
+  height: 1px;
+  background: rgba(255,255,255,0.06);
+  margin: 0 16px;
+}
+
+/* ── Tabs ── */
+.tabs {
+  display: flex;
+  padding: 0 16px;
+  gap: 4px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.tabBtn {
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  color: #a3a6aa;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: color 0.12s ease, border-color 0.12s ease;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+
+.tabBtn:hover:not(:disabled) {
+  color: #dcddde;
+}
+
+.tabBtn:disabled {
+  color: #4f545c;
+  cursor: not-allowed;
+}
+
+.tabActive {
+  color: #ffffff !important;
+  border-bottom-color: #5865f2;
+  font-weight: 600;
+}
+
+/* ── Tab content area ── */
+.tabContent {
+  padding: 14px 16px 16px;
+  background: #111214;
+}
+
+/* ── Connect tab ── */
+.connectTab {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fieldLabel {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #8e9297;
+  margin-bottom: 4px;
+}
+
+.tokenInput {
+  width: 100%;
+  padding: 9px 12px;
+  background: #1e1f22;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 4px;
+  color: #dcddde;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s ease;
+  box-sizing: border-box;
+}
+
+.tokenInput::placeholder { color: #4f545c; }
+.tokenInput:focus { border-color: #5865f2; }
+
+.connectBtns {
+  display: flex;
+  gap: 8px;
+}
+
+.startBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 16px;
+  background: #5865f2;
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.1s ease;
+  letter-spacing: -0.01em;
+}
+
+.startBtn:hover:not(:disabled) { background: #4752c4; }
+.startBtn:active:not(:disabled) { background: #3c45a5; }
+.startBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.stopBtn {
+  padding: 9px 16px;
+  background: #4f545c;
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.1s ease;
+  letter-spacing: -0.01em;
+}
+
+.stopBtn:hover { background: #686d75; }
+
+/* Spinner for connecting state */
+.spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.securityNote {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 11px;
+  color: #4f545c;
+  line-height: 1.45;
+  margin-top: 2px;
+}
+
+/* ── Server / Channel selector tab ── */
+.selectorTab {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.emptyHint {
+  font-size: 13px;
+  color: #4f545c;
+  text-align: center;
+  padding: 12px 0;
+  margin: 0;
+  font-style: italic;
+}
+
+.sendBtnFull {
+  width: 100%;
+  margin-top: 4px;
+  padding: 9px 16px;
+  background: #5865f2;
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.1s ease;
+  letter-spacing: -0.01em;
+}
+
+.sendBtnFull:hover:not(:disabled) { background: #4752c4; }
+.sendBtnFull:active:not(:disabled) { background: #3c45a5; }
+.sendBtnFull:disabled { opacity: 0.4; cursor: not-allowed; }

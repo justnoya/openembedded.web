@@ -18,8 +18,7 @@ import { supportedLngs } from '../libs.config';
 import { ActionMenuComponent } from './ActionMenu';
 import { useButtonActions, STEP_LABELS, STEP_ICONS, stepSummary } from './ButtonActionsContext';
 import { UserProfile } from './UserProfile';
-import { BotCard } from './BotCard';
-import { InlineAlert } from './InlineAlert';
+import { BotConnectCard } from './BotConnectCard';
 import { ApiResponseCard } from './ApiResponseCard';
 import { ErrorFallback } from './ErrorFallback';
 import { useToast } from './Toast';
@@ -448,101 +447,38 @@ function App() {
                 />
             )}
 
-            {/* ── Bot Connection ── */}
-            <p style={{marginBottom: '0.5rem', marginTop: '3rem', display: 'flex', alignItems: 'center', gap: '0.6rem'}}>
-                <span style={{fontSize: 16, color: 'white', fontWeight: '500'}}>Connect a Bot</span>
-                {gatewayStatus === 'connecting' && (
-                    <span style={{fontSize: 12, color: 'var(--status-idle)', fontWeight: 600}}>● Connecting…</span>
-                )}
-                {gatewayStatus === 'connected' && (
-                    <span style={{fontSize: 12, color: 'var(--status-online)', fontWeight: 600}}>● Online</span>
-                )}
-                {gatewayStatus === 'error' && (
-                    <span style={{fontSize: 12, color: 'var(--status-dnd)', fontWeight: 600}}>● Error</span>
-                )}
-            </p>
-
-            <p style={{marginBottom: '0.5rem'}}>
-                <span style={{fontSize: 13, color: '#dcddde', fontWeight: '500'}}>Bot Token</span>
-            </p>
-            <input
-                className={Styles.input}
-                placeholder="Paste your bot token here"
-                type="password"
-                value={botToken}
-                onChange={ev => {
-                    setBotToken(ev.target.value);
+            {/* ── Bot Connection Card ── */}
+            <BotConnectCard
+                botToken={botToken}
+                setBotToken={t => {
+                    setBotToken(t);
                     setBotGuilds([]);
                     setBotConnectError(null);
-                    setGatewayStatus('disconnected');
                     setGatewayError(null);
-                    disconnectBot();
                 }}
-                style={{marginBottom: '0.75rem'}}
-                onKeyDown={ev => { if (ev.key === 'Enter' && botToken.trim()) connectBot(); }}
+                gatewayStatus={gatewayStatus}
+                botConnecting={botConnecting}
+                botConnectError={botConnectError}
+                gatewayError={gatewayError}
+                onConnect={connectBot}
+                onDisconnect={disconnectBot}
+                onClearError={() => { setBotConnectError(null); setGatewayError(null); }}
+                botUser={botUser}
+                guilds={botGuilds}
+                channels={botChannels}
+                selectedGuildId={botSelectedGuild}
+                channelId={channelId}
+                chLoading={chLoading}
+                onGuildChange={selectGuild}
+                onChannelChange={id => {
+                    setChannelId(id);
+                    localStorage.setItem('discord.builders__channelId', id);
+                }}
+                onSend={sendViaBot}
+                sending={isSending}
+                botResponse={botResponse}
+                onClearResponse={() => setBotResponse(null)}
             />
-
-            <div style={{display: 'flex', gap: '0.5rem', marginBottom: '0.5rem'}}>
-                <button
-                    className={Styles.button}
-                    disabled={!botToken.trim() || botConnecting || gatewayStatus === 'connecting'}
-                    onClick={connectBot}
-                    style={{flex: 1}}
-                >
-                    {botConnecting || gatewayStatus === 'connecting'
-                        ? 'Starting…'
-                        : gatewayStatus === 'connected'
-                        ? 'Restart Bot'
-                        : 'Start Bot'}
-                </button>
-                {gatewayStatus === 'connected' && (
-                    <button
-                        className={Styles.button}
-                        onClick={disconnectBot}
-                        style={{background: '#4f545c'}}
-                    >
-                        Stop Bot
-                    </button>
-                )}
-            </div>
-
-            {(botConnectError || gatewayError) && (
-                <InlineAlert
-                    type="error"
-                    message={botConnectError || gatewayError!}
-                    onDismiss={() => { setBotConnectError(null); setGatewayError(null); }}
-                    className={Styles.botError}
-                />
-            )}
-
-            <p style={{marginTop: '0.4rem', marginBottom: '0.5rem', color: 'grey', fontSize: 13}}>
-                Token is stored locally and never sent anywhere except Discord's API.
-            </p>
-
-            {gatewayStatus === 'connected' && (
-                <BotCard
-                    botUser={botUser}
-                    guilds={botGuilds}
-                    channels={botChannels}
-                    selectedGuildId={botSelectedGuild}
-                    channelId={channelId}
-                    chLoading={chLoading}
-                    onGuildChange={selectGuild}
-                    onChannelChange={id => {
-                        setChannelId(id);
-                        localStorage.setItem('discord.builders__channelId', id);
-                    }}
-                    onSend={sendViaBot}
-                    sending={isSending}
-                />
-            )}
-
-            {!!botResponse && (
-                <ApiResponseCard
-                    response={botResponse}
-                    onDismiss={() => setBotResponse(null)}
-                />
-            )}
 
             {/* ── Button Interactions ── */}
             {configuredButtons.length > 0 && <>
