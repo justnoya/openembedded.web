@@ -20,7 +20,7 @@ export default defineConfig(({command, mode}) => ({
         // Make library auto-reload only on yarn dev
         alias: [
             // .* is to not double import css files
-            {find: /^components-sdk.*$/, replacement: resolve(__dirname, '../components-sdk/src')},
+            {find: /^components-sdk.*$/, replacement: resolve(__dirname, './packages/components-sdk/src')},
         ],
     } : undefined,
     css: {

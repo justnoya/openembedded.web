@@ -12,14 +12,14 @@ echo "Installing dependencies..."
 node "$YARN4" install
 
 echo "Starting bot server..."
-node "$YARN4" workspace discord-builders-server start &
+node "$YARN4" workspace backend start &
 BOT_PID=$!
 
 # Give the backend a moment to bind its port
 sleep 1
 
 echo "Starting dev server..."
-node "$YARN4" workspace website dev
+node "$YARN4" workspace frontend dev
 
 # Clean up backend when frontend exits
 kill $BOT_PID 2>/dev/null || true

@@ -1,15 +1,16 @@
 {
-    "name": "builders",
+    "name": "openembedded",
     "private": true,
     "scripts": {
-        "build": "yarn workspace components-sdk build && yarn workspace website build",
-        "dev": "cd website && yarn dev"
+        "build": "yarn workspace components-sdk build && yarn workspace frontend build",
+        "dev": "yarn workspace frontend dev"
     },
     "workspaces": {
         "packages": [
-            "components-sdk",
-            "website",
-            "server"
+            "frontend",
+            "frontend/packages/components-sdk",
+            "backend",
+            "database"
         ]
     },
     "devDependencies": {
