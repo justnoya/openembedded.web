@@ -28,7 +28,7 @@ export function SignIn() {
             .then(async res => {
                 const data = await res.json();
                 if (res.ok && data.ok) {
-                    window.location.reload();
+                    window.location.href = '/';
                 } else {
                     setVerifyError(data.error || 'Verification failed. Please sign in again.');
                     setView('verify-error');
