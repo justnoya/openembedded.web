@@ -2358,7 +2358,9 @@ __metadata:
   dependencies:
     bcryptjs: "npm:^3.0.3"
     cookie-session: "npm:^2.1.0"
+    drizzle-orm: "npm:^0.43.1"
     express: "npm:^4.18.2"
+    postgres: "npm:^3.4.5"
     ws: "npm:^8.16.0"
   languageName: unknown
   linkType: soft

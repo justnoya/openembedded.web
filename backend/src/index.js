@@ -5,10 +5,12 @@
  * Can be run directly (node src/index.js) or required by api/index.js
  * for Vercel serverless deployment.
  */
-const express          = require('express');
+const express           = require('express');
 const sessionMiddleware = require('./middleware/session');
 const { router: authRouter, initAuth } = require('./routes/auth');
-const botRouter        = require('./routes/bot');
+const botRouter         = require('./routes/bot');
+const { loadActionsFromDb } = require('./lib/db');
+const { setButtonActions }  = require('./lib/gateway');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -18,7 +20,7 @@ app.use(sessionMiddleware);
 // ── Auth routes (public — no session guard) ───────────────────────────────────
 app.use('/api/auth', authRouter);
 
-// GET /api/logout is a top-level route that clears the cookie
+// GET /api/logout clears the cookie
 app.get('/api/logout', (req, res) => {
     req.session = null;
     res.redirect('/');
@@ -35,7 +37,13 @@ app.use('/api/bot', botRouter);
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 if (require.main === module) {
-    initAuth().then(() => {
+    initAuth().then(async () => {
+        // Restore button actions from DB (no-op if DATABASE_URL not set)
+        const savedActions = await loadActionsFromDb();
+        if (Object.keys(savedActions).length > 0) {
+            setButtonActions(savedActions);
+        }
+
         const PORT = process.env.BOT_SERVER_PORT || 3001;
         app.listen(PORT, () => console.log(`[Server] Bot API running on port ${PORT}`));
     });

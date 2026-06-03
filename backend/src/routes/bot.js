@@ -1,15 +1,19 @@
 const express = require('express');
 const { botState, gwConnect, gwDisconnect, setButtonActions } = require('../lib/gateway');
 const { discordFetch } = require('../lib/discordFetch');
+const { saveActionsToDb } = require('../lib/db');
 
 const router = express.Router();
 
 // ── POST /api/bot/actions — register button → action-step mappings ────────────
-router.post('/actions', (req, res) => {
+router.post('/actions', async (req, res) => {
     const { actions } = req.body || {};
     if (actions && typeof actions === 'object') {
         setButtonActions(actions);
         console.log(`[Actions] Registered ${Object.keys(actions).length} button action(s): ${Object.keys(actions).join(', ') || '(none)'}`);
+
+        // Persist to DB (no-op if DATABASE_URL not configured)
+        await saveActionsToDb(actions);
     }
     res.json({ ok: true });
 });
