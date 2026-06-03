@@ -1,0 +1,73 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 4rem 2rem;
+  gap: 1.2rem;
+  font-family: "gg sans", Whitney, "Noto Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.iconWrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(242, 63, 67, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.icon {
+  width: 28px;
+  height: 28px;
+  color: #f23f43;
+}
+
+.title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+}
+
+.body {
+  font-size: 1.4rem;
+  color: #a3a6aa;
+  margin: 0;
+  max-width: 340px;
+  line-height: 1.5;
+}
+
+.code {
+  display: block;
+  font-family: "Consolas", "Andale Mono WT", monospace;
+  font-size: 1.2rem;
+  color: #f38688;
+  background: rgba(242, 63, 67, 0.08);
+  border: 1px solid rgba(242, 63, 67, 0.2);
+  border-radius: 4px;
+  padding: 8px 14px;
+  max-width: 100%;
+  word-break: break-all;
+  text-align: left;
+}
+
+.btn {
+  margin-top: 0.4rem;
+  padding: 8px 20px;
+  background: #5865f2;
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  font-size: 1.4rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.btn:hover { background: #4752c4; }
+.btn:active { background: #3c45a5; }

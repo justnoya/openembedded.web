@@ -263,3 +263,7 @@
     height: 2rem;
     flex-shrink: 0;
 }
+
+.formAlert {
+    margin-bottom: 1.6rem;
+}

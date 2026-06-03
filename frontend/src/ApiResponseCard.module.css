@@ -1,0 +1,68 @@
+.card {
+  border-radius: 6px;
+  overflow: hidden;
+  margin: 10px 0 16px;
+  font-family: "gg sans", Whitney, "Noto Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  animation: cardIn 0.2s ease both;
+  border: 1px solid transparent;
+}
+
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.success { background: rgba(35, 165, 90, 0.1);  border-color: rgba(35, 165, 90, 0.3); }
+.error   { background: rgba(242, 63, 67, 0.1);  border-color: rgba(242, 63, 67, 0.3); }
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+}
+
+.iconWrap {
+  flex-shrink: 0;
+  display: flex;
+}
+
+.success .iconWrap { color: #23a55a; }
+.error   .iconWrap { color: #f23f43; }
+
+.title {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.success .title { color: #57f287; }
+.error   .title { color: #f38688; }
+
+.dismiss {
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 3px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.1s ease;
+  color: #72767d;
+}
+.dismiss:hover { background: rgba(255, 255, 255, 0.08); color: #dcddde; }
+
+.details {
+  margin: 0;
+  padding: 0 14px 10px 36px;
+  list-style: disc;
+}
+
+.details li {
+  font-size: 12px;
+  color: #a3a6aa;
+  line-height: 1.5;
+  margin-bottom: 2px;
+}

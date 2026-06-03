@@ -1,5 +1,6 @@
 import { useState, FormEvent } from 'react';
 import Styles from './SignIn.module.css';
+import { InlineAlert } from './InlineAlert';
 
 export function SignIn() {
     const [email, setEmail]       = useState('');
@@ -99,7 +100,14 @@ export function SignIn() {
                 <h1 className={Styles.title}>Welcome back!</h1>
                 <p className={Styles.subtitle}>We're so excited to see you again!</p>
 
-                {error && <div className={Styles.error}>{error}</div>}
+                {error && (
+                    <InlineAlert
+                        type="error"
+                        message={error}
+                        onDismiss={() => setError('')}
+                        className={Styles.formAlert}
+                    />
+                )}
 
                 <form onSubmit={handleSubmit} noValidate className={Styles.form}>
                     <div className={Styles.field}>

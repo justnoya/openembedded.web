@@ -12,13 +12,17 @@ import { ColorPicker } from './ColorPicker';
 import { useHashRouter } from './useHashRouter';
 import { Codegen } from './Codegen';
 import { useRouter } from './useRouter';
-import { Trans, useTranslation } from 'react-i18next'; // Trans used for webhook.codegen
+import { Trans, useTranslation } from 'react-i18next';
 import i18next from 'i18next';
 import { supportedLngs } from '../libs.config';
 import { ActionMenuComponent } from './ActionMenu';
 import { useButtonActions, STEP_LABELS, STEP_ICONS, stepSummary } from './ButtonActionsContext';
 import { UserProfile } from './UserProfile';
 import { BotCard } from './BotCard';
+import { InlineAlert } from './InlineAlert';
+import { ApiResponseCard } from './ApiResponseCard';
+import { ErrorFallback } from './ErrorFallback';
+import { useToast } from './Toast';
 type GatewayStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
 
 
@@ -57,6 +61,7 @@ function extractButtons(components: Component[]): ButtonInfo[] {
 
 function App() {
     const dispatch = useDispatch();
+    const toast    = useToast();
     const stateManager = useMemo(() => new DisplaySliceManager(dispatch), [dispatch]);
     const state = useSelector((state: RootState) => state.display.data)
     const webhookUrl = useSelector((state: RootState) => state.display.webhookUrl);
@@ -197,33 +202,42 @@ function App() {
     }, [threadId]);
 
     const sendMessage = async () => {
-        const req = await fetch(String(parsed_url), webhookImplementation.prepareRequest(state))
-
-        const status_code = req.status;
-        if (status_code === 204) return dispatch(actions.setWebhookResponse({"status": "204 Success"}));
-
-        const error_data = await req.json();
-
-        if (error_data?.code === 220001 && dialog.current !== null) {
-            dialog.current.showModal();
-            dispatch(actions.setWebhookResponse(null))
-            return;
+        try {
+            const req = await fetch(String(parsed_url), webhookImplementation.prepareRequest(state));
+            const status_code = req.status;
+            if (status_code === 204) {
+                dispatch(actions.setWebhookResponse(null));
+                toast.success('Message sent successfully');
+                return;
+            }
+            const error_data = await req.json();
+            if (error_data?.code === 220001 && dialog.current !== null) {
+                dialog.current.showModal();
+                dispatch(actions.setWebhookResponse(null));
+                return;
+            }
+            dispatch(actions.setWebhookResponse(error_data));
+        } catch {
+            toast.error('Network error — could not reach Discord', 'Send failed');
         }
-
-        dispatch(actions.setWebhookResponse(error_data))
     }
 
     const sendMessageWithTitle = async () => {
         if (!postTitle) return;
         dialog.current?.close();
-
-        const req = await fetch(String(parsed_url), webhookImplementation.prepareRequest(state, postTitle))
-
-        const status_code = req.status;
-        if (status_code === 204) return dispatch(actions.setWebhookResponse({"status": "204 Success"}));
-
-        const error_data = await req.json();
-        dispatch(actions.setWebhookResponse(error_data))
+        try {
+            const req = await fetch(String(parsed_url), webhookImplementation.prepareRequest(state, postTitle));
+            const status_code = req.status;
+            if (status_code === 204) {
+                dispatch(actions.setWebhookResponse(null));
+                toast.success('Message sent successfully');
+                return;
+            }
+            const error_data = await req.json();
+            dispatch(actions.setWebhookResponse(error_data));
+        } catch {
+            toast.error('Network error — could not reach Discord', 'Send failed');
+        }
     }
 
     const connectBot = async () => {
@@ -245,13 +259,15 @@ function App() {
             });
             const data: any = await res.json();
             if (!res.ok) {
-                setBotConnectError(data.error || 'Failed to start bot.');
+                const msg = data.error || 'Failed to start bot.';
+                setBotConnectError(msg);
                 setGatewayStatus('error');
+                toast.error(msg, 'Bot connection failed');
                 return;
             }
             if (data.guilds?.length) setBotGuilds(data.guilds);
+            toast.info('Connecting to Discord Gateway…', 'Bot starting');
             startPolling();
-            // Re-fetch channels for the previously-selected guild (if any)
             const savedGuildId = localStorage.getItem('discord.builders__guildId') || '';
             if (savedGuildId) {
                 setChLoading(true);
@@ -262,8 +278,10 @@ function App() {
                     .finally(() => setChLoading(false));
             }
         } catch (e: any) {
-            setBotConnectError(e?.message || 'Network error — is the bot server running?');
+            const msg = e?.message || 'Network error — is the bot server running?';
+            setBotConnectError(msg);
             setGatewayStatus('error');
+            toast.error(msg, 'Bot connection failed');
         } finally {
             setBotConnecting(false);
         }
@@ -292,7 +310,8 @@ function App() {
             if (!res.ok) throw new Error(data.error || 'Failed to load channels.');
             setBotChannels(data);
         } catch (e: any) {
-            setBotConnectError(e?.message || 'Failed to load channels.');
+            const msg = e?.message || 'Failed to load channels.';
+            toast.error(msg, 'Channel load failed');
         } finally {
             setChLoading(false);
         }
@@ -324,8 +343,8 @@ function App() {
             });
             const data: any = await res.json().catch(() => null);
             if (res.ok) {
-                setBotResponse({ status: `${res.status} Success` });
-                // Sync button action configs so the server can handle interaction callbacks
+                setBotResponse(null);
+                toast.success('Message sent to Discord', 'Sent via bot');
                 fetch('/api/bot/actions', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -333,9 +352,12 @@ function App() {
                 }).catch(() => {});
             } else {
                 setBotResponse(data || { error: `HTTP ${res.status}` });
+                toast.error(data?.message || `HTTP ${res.status}`, 'Send failed');
             }
         } catch (e: any) {
-            setBotResponse({ error: e?.message || 'Network error' });
+            const msg = e?.message || 'Network error';
+            setBotResponse({ error: msg });
+            toast.error(msg, 'Send failed');
         } finally {
             setIsSending(false);
         }
@@ -376,7 +398,7 @@ function App() {
             }}>Clear everything</button></p>
         </div>}
         <div className={Styles.leftColumn}>
-            <ErrorBoundary fallback={<></>}>
+            <ErrorBoundary FallbackComponent={ErrorFallback}>
                 <Capsule state={state}
                          stateManager={stateManager}
                          stateKey={stateKey}
@@ -419,23 +441,24 @@ function App() {
                 <div className={Styles.button} onClick={sendMessageWithTitle}>{t('thread.post.button')}</div>
             </dialog>
 
-            {!!response && <div className={Styles.data}
-                                style={{
-                                    marginBottom: '2rem',
-                                    color: '#dd9898'
-                                }}>{JSON.stringify(response, undefined, 4)}</div>}
+            {!!response && (
+                <ApiResponseCard
+                    response={response}
+                    onDismiss={() => dispatch(actions.setWebhookResponse(null))}
+                />
+            )}
 
             {/* ── Bot Connection ── */}
             <p style={{marginBottom: '0.5rem', marginTop: '3rem', display: 'flex', alignItems: 'center', gap: '0.6rem'}}>
                 <span style={{fontSize: 16, color: 'white', fontWeight: '500'}}>Connect a Bot</span>
                 {gatewayStatus === 'connecting' && (
-                    <span style={{fontSize: 12, color: '#faa61a', fontWeight: 600}}>● Connecting…</span>
+                    <span style={{fontSize: 12, color: 'var(--status-idle)', fontWeight: 600}}>● Connecting…</span>
                 )}
                 {gatewayStatus === 'connected' && (
-                    <span style={{fontSize: 12, color: '#3ba55d', fontWeight: 600}}>● Online</span>
+                    <span style={{fontSize: 12, color: 'var(--status-online)', fontWeight: 600}}>● Online</span>
                 )}
                 {gatewayStatus === 'error' && (
-                    <span style={{fontSize: 12, color: '#ed4245', fontWeight: 600}}>● Error</span>
+                    <span style={{fontSize: 12, color: 'var(--status-dnd)', fontWeight: 600}}>● Error</span>
                 )}
             </p>
 
@@ -484,9 +507,12 @@ function App() {
             </div>
 
             {(botConnectError || gatewayError) && (
-                <p style={{color: '#ed4245', fontSize: 13, marginBottom: '0.5rem'}}>
-                    ⚠ {botConnectError || gatewayError}
-                </p>
+                <InlineAlert
+                    type="error"
+                    message={botConnectError || gatewayError!}
+                    onDismiss={() => { setBotConnectError(null); setGatewayError(null); }}
+                    className={Styles.botError}
+                />
             )}
 
             <p style={{marginTop: '0.4rem', marginBottom: '0.5rem', color: 'grey', fontSize: 13}}>
@@ -511,10 +537,12 @@ function App() {
                 />
             )}
 
-            {!!botResponse && <div className={Styles.data}
-                                   style={{marginTop: '1rem', marginBottom: '2rem', color: (botResponse as any)?.status ? '#98dd98' : '#dd9898'}}>
-                {JSON.stringify(botResponse, undefined, 4)}
-            </div>}
+            {!!botResponse && (
+                <ApiResponseCard
+                    response={botResponse}
+                    onDismiss={() => setBotResponse(null)}
+                />
+            )}
 
             {/* ── Button Interactions ── */}
             {configuredButtons.length > 0 && <>

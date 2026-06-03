@@ -12,6 +12,7 @@ import { ButtonActionsProvider } from './ButtonActionsContext';
 import { ResponseBuilderProvider } from './ResponseBuilderContext';
 import { useAuth } from './hooks/useAuth';
 import { SignIn } from './SignIn';
+import { ToastProvider } from './Toast';
 
 function AuthGate() {
     const { isAuthenticated, isLoading } = useAuth();
@@ -26,14 +27,12 @@ function AuthGate() {
                 background: '#202226',
             }}>
                 <div style={{ position: 'relative', width: '6rem', height: '6rem' }}>
-                    {/* Static track ring */}
                     <div style={{
                         position: 'absolute',
                         inset: 0,
                         borderRadius: '50%',
                         border: '8px solid rgba(88,101,242,0.2)',
                     }} />
-                    {/* Spinning bold arc */}
                     <div style={{
                         position: 'absolute',
                         inset: 0,
@@ -68,6 +67,8 @@ const root = createRoot(document.getElementById('root')!);
 
 root.render(
   <StrictMode>
-    <AuthGate />
+    <ToastProvider>
+      <AuthGate />
+    </ToastProvider>
   </StrictMode>,
 )
