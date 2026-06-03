@@ -1,225 +1,261 @@
 /* ────────────────────────────────────────────────────────────────
-   ActionMenu — design tokens match the rest of the discord.builders
-   UI (rem base = 10 px from index.css html{font-size:62.5%})
+   ActionMenu — Discord 2025 Design System
+   (rem base = 10px from index.css html{font-size:62.5%})
    ──────────────────────────────────────────────────────────────── */
 
 .menu {
-    background: #1c1d20;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
-    margin-top: 0.8rem;
-    overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.55);
+  background: var(--bg-floating);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-lg);
+  margin-top: 0.8rem;
+  overflow: hidden;
+  box-shadow: var(--shadow-high);
 }
 
-/* ── header ── */
+/* ── Header ── */
 .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.9rem 1.4rem;
-    background: #111214;
-    font-size: 1.1rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    color: #b5bac1;
-    letter-spacing: 0.6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.4rem;
+  background: var(--bg-nested);
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-faint);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .closeBtn {
-    background: none;
-    border: none;
-    color: #b5bac1;
-    cursor: pointer;
-    font-size: 1.5rem;
-    padding: 0;
-    line-height: 1;
-    font-family: inherit;
-    &:hover { color: #fff; }
+  background: none;
+  border: none;
+  color: var(--interactive-normal);
+  cursor: pointer;
+  font-size: 1.5rem;
+  padding: 0.3rem;
+  line-height: 1;
+  font-family: inherit;
+  border-radius: var(--radius-sm);
+  transition: color var(--t-fast) var(--ease-default), background var(--t-fast) var(--ease-default);
+  &:hover { color: var(--interactive-active); background: rgba(255,255,255,0.06); }
 }
 
-/* ── body ── */
-.body {
-    padding: 1rem 1.4rem 1.2rem;
-}
+/* ── Body ── */
+.body { padding: 1rem 1.4rem 1.2rem; }
 
-/* ── step cards list ── */
+/* ── Step cards list ── */
 .stepList {
-    display: flex;
-    flex-direction: column;
-    gap: 0.6rem;
-    margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
 }
 
 .stepCard {
-    background: #2f3136;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 0 2px rgba(0, 0, 0, 0.4);
-    border-radius: 4px;
-    padding: 0.8rem 1rem;
-    display: flex;
-    align-items: flex-start;
-    gap: 0.8rem;
-    cursor: pointer;
+  background: var(--bg-sidebar-alt);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: var(--shadow-low);
+  border-radius: var(--radius-lg);
+  padding: 0.9rem 1.1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  cursor: pointer;
+  transition:
+    border-color var(--t-fast) var(--ease-default),
+    background var(--t-fast) var(--ease-default),
+    box-shadow var(--t-fast) var(--ease-default);
 
-    &:hover { border-color: rgba(88, 101, 242, 0.5); }
+  &:hover {
+    border-color: rgba(88, 101, 242, 0.4);
+    background: var(--bg-sidebar);
+    box-shadow: var(--shadow-low), 0 0 0 1px rgba(88,101,242,0.15);
+  }
 }
 
-.stepIcon {
-    font-size: 1.5rem;
-    flex-shrink: 0;
-    margin-top: 0.1rem;
-}
+.stepIcon { font-size: 1.5rem; flex-shrink: 0; margin-top: 0.1rem; }
 
-.stepInfo {
-    flex: 1;
-    min-width: 0;
-}
+.stepInfo { flex: 1; min-width: 0; }
 
 .stepType {
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: #fff;
-    margin: 0 0 0.2rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--header-primary);
+  margin: 0 0 0.2rem;
 }
 
 .stepSummary {
-    font-size: 1.1rem;
-    color: #b5bac1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .stepEphemeral {
-    font-size: 1.0rem;
-    background: #5865f2;
-    color: #fff;
-    border-radius: 3px;
-    padding: 0.1rem 0.5rem;
-    margin-left: 0.4rem;
-    vertical-align: middle;
+  font-size: 1.0rem;
+  background: var(--discord-blurple);
+  color: var(--discord-white);
+  border-radius: var(--radius-sm);
+  padding: 0.1rem 0.5rem;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+  font-weight: 500;
 }
 
 .stepRemove {
-    background: none;
-    border: none;
-    color: #6d6f78;
-    cursor: pointer;
-    font-size: 1.4rem;
-    padding: 0;
-    flex-shrink: 0;
-    font-family: inherit;
-    &:hover { color: #ed4245; }
+  background: none;
+  border: none;
+  color: var(--text-faint);
+  cursor: pointer;
+  font-size: 1.4rem;
+  padding: 0.2rem;
+  flex-shrink: 0;
+  font-family: inherit;
+  border-radius: var(--radius-sm);
+  transition: color var(--t-fast) var(--ease-default), background var(--t-fast) var(--ease-default);
+  &:hover { color: var(--discord-red); background: rgba(237, 66, 69, 0.1); }
 }
 
-/* ── add step button ── */
+/* ── Add step button ── */
 .addBtn {
-    width: 100%;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px dashed rgba(255, 255, 255, 0.15);
-    border-radius: 4px;
-    color: #b5bac1;
-    padding: 0.7rem 1.2rem;
-    font-size: 1.3rem;
-    cursor: pointer;
-    font-family: inherit;
-    text-align: center;
-    &:hover { border-color: #5865f2; color: #fff; }
+  width: 100%;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-lg);
+  color: var(--text-muted);
+  padding: 0.8rem 1.2rem;
+  font-size: 1.3rem;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: center;
+  font-weight: 500;
+  transition:
+    border-color var(--t-fast) var(--ease-default),
+    color var(--t-fast) var(--ease-default),
+    background var(--t-fast) var(--ease-default);
+  &:hover { border-color: var(--discord-blurple); color: var(--text-normal); background: rgba(88,101,242,0.06); }
 }
 
 /* ════════════════════════════════════════════════════════════════
-   DROPDOWN CARD — exact replica of CapsuleButton's .large_button_ctx
+   DROPDOWN CONTEXT CARD — Discord floating menu spec
+   Background: --bg-floating (#18191C)
+   Item hover:  blurple bg + white text (Discord standard)
    ════════════════════════════════════════════════════════════════ */
 
 .ctxCard {
-    background: #1c1d20;
-    color: #eee;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
-    overflow: hidden;
-    cursor: default;
-    user-select: none;
-    margin-bottom: 0.8rem;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  background: var(--bg-floating);
+  color: var(--text-normal);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  cursor: default;
+  user-select: none;
+  margin-bottom: 0.8rem;
+  box-shadow: var(--shadow-high);
+  animation: ctx-appear var(--t-normal) var(--ease-out);
+  transform-origin: top center;
 }
 
-/* header row inside the card (for sub-picker back button) */
+@keyframes ctx-appear {
+  from { opacity: 0; transform: scaleY(0.92); }
+  to   { opacity: 1; transform: scaleY(1); }
+}
+
+/* Header row inside the card (sub-picker back button) */
 .ctxHeader {
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-    padding: 0.7rem 1rem 0.7rem 0.6rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    background: #111214;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.7rem 1rem 0.7rem 0.6rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--bg-nested);
 }
 
 .ctxBackBtn {
-    background: none;
-    border: none;
-    color: #b5bac1;
-    font-size: 1.3rem;
-    cursor: pointer;
-    font-family: inherit;
-    padding: 0.1rem 0.6rem 0.1rem 0.3rem;
-    border-radius: 3px;
-    &:hover { background: rgba(255,255,255,0.07); color: #fff; }
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.3rem;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 0.2rem 0.6rem 0.2rem 0.3rem;
+  border-radius: var(--radius-md);
+  transition: background var(--t-fast) var(--ease-default), color var(--t-fast) var(--ease-default);
+  &:hover { background: rgba(255,255,255,0.06); color: var(--text-normal); }
 }
 
 .ctxHeaderLabel {
-    font-size: 1.05rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    color: #6d6f78;
-    letter-spacing: 0.6px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  letter-spacing: 0.03em;
 }
 
-/* ── each row: icon + text — matches .large_button_ctx_item exactly ── */
+/* ── Each menu row: icon + label ── */
 .ctxItem {
-    display: flex;
-    align-items: stretch;
-    cursor: pointer;
+  display: flex;
+  align-items: stretch;
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  margin: 0.2rem 0.4rem;
+  transition: background var(--t-fast) var(--ease-default), color var(--t-fast) var(--ease-default);
 
-    &:hover { background: #26292c; }
+  &:hover {
+    background: var(--discord-blurple);
+
+    .ctxItemText { color: var(--discord-white); }
+    img { filter: brightness(0) invert(1); }
+  }
+
+  &:active { background: var(--discord-blurple-hover); }
 }
 
 .ctxItemSeparator {
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: 0.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .ctxItemImg {
-    padding-left: 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    img {
-        width: 2rem;
-        height: 2rem;
-    }
+  padding-left: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  img {
+    width: 1.8rem;
+    height: 1.8rem;
+    opacity: 0.75;
+    transition: filter var(--t-fast) var(--ease-default), opacity var(--t-fast) var(--ease-default);
+  }
 }
 
 .ctxItemText {
-    font-size: 1.4rem;
-    color: #dcddde;
-    padding: 1rem;
+  font-size: 1.4rem;
+  font-weight: 400;
+  color: var(--text-normal);
+  padding: 0.9rem 1rem;
+  transition: color var(--t-fast) var(--ease-default);
 }
 
-/* cancel row at the bottom of the top-level picker */
+/* Cancel row */
 .ctxCancelRow {
-    padding: 0.4rem 1rem 0.8rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 0.4rem 1rem 0.8rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .ctxCancelBtn {
-    background: transparent;
-    border: none;
-    color: #6d6f78;
-    font-size: 1.2rem;
-    cursor: pointer;
-    font-family: inherit;
-    padding: 0.3rem 0;
-    &:hover { color: #b5bac1; }
+  background: transparent;
+  border: none;
+  color: var(--text-faint);
+  font-size: 1.2rem;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 0.3rem 0;
+  transition: color var(--t-fast) var(--ease-default);
+  &:hover { color: var(--text-muted); }
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -227,197 +263,251 @@
    ════════════════════════════════════════════════════════════════ */
 
 .editor {
-    background: #111214;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
-    padding: 1rem 1.2rem;
-    margin-bottom: 0.8rem;
+  background: var(--bg-nested);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-lg);
+  padding: 1.2rem 1.4rem;
+  margin-bottom: 0.8rem;
+  animation: modal-enter var(--t-normal) var(--ease-out);
+}
+
+@keyframes modal-enter {
+  from { opacity: 0; transform: scale(0.98) translateY(-4px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 .editorTitleRow {
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-    margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 1.2rem;
+  padding-bottom: 0.8rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.editorTypeIcon {
-    font-size: 1.6rem;
-    line-height: 1;
-}
+.editorTypeIcon { font-size: 1.6rem; line-height: 1; }
 
 .editorTitle {
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: #dcddde;
-    margin: 0;
-    flex: 1;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--header-primary);
+  margin: 0;
+  flex: 1;
 }
 
-/* ── field labels ── */
+/* ── Field labels ── */
 .label {
-    display: block;
-    font-family: "gg sans", Whitney, "Noto Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-size: 1.2rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    color: #dcddde;
-    letter-spacing: 0.5px;
-    margin: 0.8rem 0 0.4rem;
+  display: block;
+  font-family: "gg sans", Whitney, "Noto Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--header-secondary);
+  margin: 1rem 0 0.5rem;
 }
 
-/* ── inputs ── */
+/* ── Inputs ── */
 .input {
-    width: 100%;
-    padding: 0.8rem 1.6rem;
-    background: #2f3136;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 0 2px rgba(0, 0, 0, 0.4);
-    border-radius: 4px;
-    color: #dcddde;
-    font-size: 1.4rem;
-    font-family: inherit;
-    line-height: inherit;
-    outline: none;
-    box-sizing: border-box;
+  width: 100%;
+  padding: 0.9rem 1.4rem;
+  background: var(--bg-input);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: var(--shadow-low);
+  border-radius: var(--radius-lg);
+  color: var(--text-normal);
+  font-size: 1.4rem;
+  font-family: inherit;
+  line-height: inherit;
+  outline: none;
+  box-sizing: border-box;
+  transition:
+    border-color var(--t-fast) var(--ease-default),
+    box-shadow var(--t-fast) var(--ease-default);
 
-    &::placeholder { font-style: italic; color: gray; }
+  &::placeholder { font-style: italic; color: var(--text-faint); }
+  &:focus {
+    border-color: var(--discord-blurple);
+    box-shadow: var(--shadow-low), 0 0 0 2px rgba(88,101,242,0.2);
+  }
 }
 
-/* ── textarea ── */
+/* ── Textarea ── */
 .textarea {
-    width: 100%;
-    padding: 0.8rem 1.6rem;
-    background: #2f3136;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 0 2px rgba(0, 0, 0, 0.4);
-    border-radius: 4px;
-    color: #dcddde;
-    font-size: 1.3rem;
-    font-family: inherit;
-    line-height: 1.5;
-    outline: none;
-    box-sizing: border-box;
-    resize: vertical;
-    min-height: 7rem;
+  width: 100%;
+  padding: 0.9rem 1.4rem;
+  background: var(--bg-input);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: var(--shadow-low);
+  border-radius: var(--radius-lg);
+  color: var(--text-normal);
+  font-size: 1.3rem;
+  font-family: inherit;
+  line-height: 1.5;
+  outline: none;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 7.2rem;
+  transition:
+    border-color var(--t-fast) var(--ease-default),
+    box-shadow var(--t-fast) var(--ease-default);
 
-    &::placeholder { font-style: italic; color: gray; }
+  &::placeholder { font-style: italic; color: var(--text-faint); }
+  &:focus {
+    border-color: var(--discord-blurple);
+    box-shadow: var(--shadow-low), 0 0 0 2px rgba(88,101,242,0.2);
+  }
 }
 
-/* ── ephemeral checkbox row ── */
+/* ── Ephemeral checkbox ── */
 .checkRow {
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-    margin: 0.8rem 0 0.4rem;
-    font-size: 1.3rem;
-    color: #b5bac1;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin: 0.8rem 0 0.4rem;
+  font-size: 1.3rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+
+  input[type="checkbox"] {
+    accent-color: var(--discord-blurple);
+    width: 1.5rem;
+    height: 1.5rem;
     cursor: pointer;
-    user-select: none;
-
-    input[type="checkbox"] { accent-color: #5865f2; width: 1.4rem; height: 1.4rem; cursor: pointer; }
+  }
 }
 
-/* ── hint text below fields ── */
+/* ── Hint text ── */
 .hint {
-    font-size: 1.1rem;
-    color: #6d6f78;
-    margin: 0.2rem 0 0.4rem;
-    line-height: 1.4;
-    font-style: italic;
+  font-size: 1.1rem;
+  color: var(--text-faint);
+  margin: 0.3rem 0 0.5rem;
+  line-height: 1.4;
 }
 
-/* ── editor Apply / Cancel buttons ── */
+/* ── Editor Apply / Cancel ── */
 .editorBtns {
-    display: flex;
-    gap: 0.6rem;
-    justify-content: flex-end;
-    margin-top: 1rem;
+  display: flex;
+  gap: 0.6rem;
+  justify-content: flex-end;
+  margin-top: 1.2rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid rgba(255,255,255,0.06);
 }
 
 .saveBtn {
-    background: #5865f2;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 0 2px rgba(0, 0, 0, 0.4), 0 0 40px rgba(88, 101, 242, 0.32);
-    border-radius: 4px;
-    color: #fff;
-    padding: 0.6rem 1.8rem;
-    font-size: 1.3rem;
-    cursor: pointer;
-    font-family: inherit;
-    &:hover { background: #4752c4; }
-    &:disabled { background: #4e5058; box-shadow: none; cursor: not-allowed; }
+  background: var(--discord-blurple);
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--discord-white);
+  padding: 0.7rem 2rem;
+  font-size: 1.3rem;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition:
+    background var(--t-fast) var(--ease-default),
+    box-shadow var(--t-fast) var(--ease-default),
+    transform var(--t-fast) var(--ease-default);
+  &:hover { background: var(--discord-blurple-hover); box-shadow: 0 2px 8px rgba(88,101,242,0.3); }
+  &:active { background: var(--discord-blurple-active); transform: translateY(1px); }
+  &:disabled {
+    background: var(--interactive-muted);
+    box-shadow: none;
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
 }
 
 .cancelBtn {
-    background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 4px;
-    color: #b5bac1;
-    padding: 0.6rem 1.8rem;
-    font-size: 1.3rem;
-    cursor: pointer;
-    font-family: inherit;
-    &:hover { border-color: rgba(255, 255, 255, 0.3); color: #fff; }
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  padding: 0.7rem 2rem;
+  font-size: 1.3rem;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition:
+    border-color var(--t-fast) var(--ease-default),
+    color var(--t-fast) var(--ease-default),
+    background var(--t-fast) var(--ease-default);
+  &:hover {
+    border-color: rgba(255, 255, 255, 0.25);
+    color: var(--text-normal);
+    background: rgba(255, 255, 255, 0.04);
+  }
 }
 
-/* ── clear all ── */
+/* ── Clear all ── */
 .clearAllBtn {
-    width: 100%;
-    background: transparent;
-    border: none;
-    color: #6d6f78;
-    font-size: 1.1rem;
-    cursor: pointer;
-    font-family: inherit;
-    text-align: center;
-    padding: 0.4rem 0 0;
-    margin-top: 0.4rem;
-    &:hover { color: #ed4245; }
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--text-faint);
+  font-size: 1.1rem;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: center;
+  padding: 0.5rem 0 0;
+  margin-top: 0.4rem;
+  transition: color var(--t-fast) var(--ease-default);
+  &:hover { color: var(--discord-red); }
 }
 
-/* ── empty hint ── */
+/* ── Empty hint ── */
 .emptyHint {
-    text-align: center;
-    color: #6d6f78;
-    font-size: 1.2rem;
-    padding: 0.6rem 0 0.8rem;
-    font-style: italic;
+  text-align: center;
+  color: var(--text-faint);
+  font-size: 1.2rem;
+  padding: 0.8rem 0 1rem;
 }
 
 /* ── Design response button ── */
 .designBtn {
-    width: 100%;
-    background: rgba(88, 101, 242, 0.12);
-    border: 1px solid rgba(88, 101, 242, 0.4);
-    border-radius: 4px;
-    color: #a5adfd;
-    padding: 0.8rem 1.2rem;
-    font-size: 1.3rem;
-    cursor: pointer;
-    font-family: inherit;
-    text-align: center;
-    margin-top: 0.4rem;
-    &:hover { background: rgba(88, 101, 242, 0.22); border-color: #5865f2; color: #fff; }
+  width: 100%;
+  background: rgba(88, 101, 242, 0.1);
+  border: 1px solid rgba(88, 101, 242, 0.3);
+  border-radius: var(--radius-lg);
+  color: var(--text-brand);
+  padding: 0.9rem 1.2rem;
+  font-size: 1.3rem;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: center;
+  margin-top: 0.5rem;
+  font-weight: 500;
+  transition:
+    background var(--t-fast) var(--ease-default),
+    border-color var(--t-fast) var(--ease-default),
+    color var(--t-fast) var(--ease-default);
+  &:hover {
+    background: rgba(88, 101, 242, 0.2);
+    border-color: var(--discord-blurple);
+    color: var(--discord-white);
+  }
 }
 
 .embedPreview {
-    font-size: 1.15rem;
-    color: #3ba55d;
-    margin: 0.4rem 0 0.2rem;
-    font-weight: 600;
+  font-size: 1.15rem;
+  color: var(--text-positive);
+  margin: 0.4rem 0 0.2rem;
+  font-weight: 600;
 }
 
 .clearEmbedBtn {
-    width: 100%;
-    background: none;
-    border: none;
-    color: #6d6f78;
-    font-size: 1.1rem;
-    cursor: pointer;
-    font-family: inherit;
-    text-align: center;
-    padding: 0.2rem 0 0;
-    margin-top: 0.2rem;
-    &:hover { color: #ed4245; }
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--text-faint);
+  font-size: 1.1rem;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: center;
+  padding: 0.2rem 0 0;
+  margin-top: 0.2rem;
+  transition: color var(--t-fast) var(--ease-default);
+  &:hover { color: var(--discord-red); }
 }

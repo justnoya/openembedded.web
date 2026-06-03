@@ -1,27 +1,35 @@
 import { StylesConfig } from 'react-select/dist/declarations/src/styles';
 
 export const select_styles: StylesConfig = {
-    control: (provided) => ({
+    control: (provided, { isFocused }) => ({
         ...provided,
-        background: 'unset',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        boxShadow: '0 0 2px rgba(0, 0, 0, 0.4)',
+        background: 'var(--bg-input, #1E1F22)',
+        border: isFocused
+            ? '1px solid var(--discord-blurple, #5865F2)'
+            : '1px solid rgba(255, 255, 255, 0.06)',
+        boxShadow: isFocused
+            ? '0 0 0 2px rgba(88, 101, 242, 0.2)'
+            : '0 1px 0 rgba(4,4,5,0.2)',
+        borderRadius: '8px',
         cursor: 'pointer',
+        transition: 'border-color 100ms, box-shadow 100ms',
         "&:hover": {
-            border: undefined
+            borderColor: isFocused
+                ? 'var(--discord-blurple, #5865F2)'
+                : 'rgba(255, 255, 255, 0.14)',
         }
     }),
-    option: (provided, {isSelected, isFocused}) => {
-        let backgroundColor = 'transparent';
-        let border = '1px solid transparent';
 
-        if (isFocused) {
-            backgroundColor = '#36393f';
-            border = '1px solid rgba(255, 255, 255, 0.05)';
-        }
+    option: (provided, { isSelected, isFocused }) => {
+        let backgroundColor = 'transparent';
+        let borderColor = 'transparent';
+
         if (isSelected) {
-            backgroundColor = '#34396f';
-            border = '1px solid rgba(82, 93, 226, 0.7)'
+            backgroundColor = 'rgba(88, 101, 242, 0.25)';
+            borderColor = 'rgba(88, 101, 242, 0.5)';
+        } else if (isFocused) {
+            backgroundColor = 'var(--discord-blurple, #5865F2)';
+            borderColor = 'transparent';
         }
 
         return {
@@ -29,71 +37,82 @@ export const select_styles: StylesConfig = {
             alignItems: 'center',
             display: 'flex',
             cursor: 'pointer',
-            border: border,
+            border: `1px solid ${borderColor}`,
             borderRadius: '4px',
-            padding: '0.8rem 1rem',
-            margin: '3px 0',
+            padding: '0.7rem 1rem',
+            margin: '2px 0',
             width: '100%',
-            color: "#fff",
+            color: '#FFFFFF',
             backgroundColor,
-        }
+            transition: 'background 100ms',
+        };
     },
 
     menu: (provided) => ({
         ...provided,
-        marginTop: '0.5rem',
-        boxShadow: 'none',
-        backgroundColor: '#202226',
-        border: '1px solid rgba(255, 255, 255, 0.15)',
-        borderRadius: '5px'
+        marginTop: '0.4rem',
+        backgroundColor: 'var(--bg-floating, #18191C)',
+        border: '1px solid rgba(255, 255, 255, 0.06)',
+        borderRadius: '8px',
+        boxShadow: '0 8px 16px rgba(0,0,0,0.24)',
+        overflow: 'hidden',
     }),
 
     menuList: () => ({
-        // In the future, you can add maxHeight to menuList
-        // maxHeight: '300px',
-
-        padding: '1rem',
+        padding: '0.6rem',
     }),
 
-    valueContainer: (provided) => {
-        return {
-            ...provided,
-            padding: '0.8rem 1.6rem',
-        }
-    },
+    valueContainer: (provided) => ({
+        ...provided,
+        padding: '0.8rem 1.4rem',
+    }),
 
-    singleValue: (provided) => {
-        return {
-            ...provided,
-            color: '#dcddde',
-        }
-    },
+    singleValue: (provided) => ({
+        ...provided,
+        color: 'var(--text-normal, #DCDDDE)',
+    }),
+
+    placeholder: (provided) => ({
+        ...provided,
+        color: 'var(--text-faint, #72767D)',
+        fontStyle: 'italic',
+    }),
 
     input: (provided) => ({
         ...provided,
-        color: '#dcddde',
+        color: 'var(--text-normal, #DCDDDE)',
         margin: undefined,
         paddingTop: undefined,
-        paddingBottom: undefined
+        paddingBottom: undefined,
     }),
 
     indicatorSeparator: (provided) => ({
         ...provided,
-        display: 'none'
+        display: 'none',
     }),
 
     dropdownIndicator: (provided) => ({
         ...provided,
-        color: '#dcddde'
+        color: 'var(--interactive-normal, #B9BBBE)',
+        padding: '0 1.2rem 0 0',
+        transition: 'color 100ms',
+        '&:hover': { color: 'var(--interactive-hover, #DCDDDE)' },
     }),
 
     loadingIndicator: (provided) => ({
         ...provided,
-        color: '#5758e6',
+        color: 'var(--discord-blurple, #5865F2)',
     }),
 
     loadingMessage: (provided) => ({
         ...provided,
-        color: '#5758e6',
+        color: 'var(--text-muted, #A3A6AA)',
+        fontSize: '13px',
     }),
-}
+
+    noOptionsMessage: (provided) => ({
+        ...provided,
+        color: 'var(--text-faint, #72767D)',
+        fontSize: '13px',
+    }),
+};
