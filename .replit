@@ -39,6 +39,10 @@ externalPort = 80
 localPort = 5000
 externalPort = 5000
 
+[[ports]]
+localPort = 5001
+externalPort = 3001
+
 [deployment]
 deploymentTarget = "vm"
 build = ["bash", "-c", "yarn workspace components-sdk build && yarn workspace frontend build"]
