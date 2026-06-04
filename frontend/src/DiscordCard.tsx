@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useAuth } from './hooks/useAuth';
 
 const T = {
     blurple:      '#5865F2',
@@ -10,7 +11,6 @@ const T = {
     muted35:      'rgba(255,255,255,0.35)',
     label:        'rgba(255,255,255,0.85)',
     borderSubtle: 'rgba(255,255,255,0.15)',
-    borderBtn:    'rgba(255,255,255,0.30)',
 };
 const FONT = "'gg sans','Whitney','Segoe UI',sans-serif";
 
@@ -36,8 +36,8 @@ const OpenEmbedLogo = ({ size = 36 }: { size?: number }) => (
     </svg>
 );
 
-const AvatarPlaceholder = () => (
-    <svg viewBox="0 0 40 40" width="40" height="40">
+const AvatarPlaceholder = ({ size = 40 }: { size?: number }) => (
+    <svg viewBox="0 0 40 40" width={size} height={size}>
         <circle cx="20" cy="20" r="20" fill="#4752C4"/>
         <circle cx="20" cy="16" r="8" fill="rgba(255,255,255,0.8)"/>
         <ellipse cx="20" cy="36" rx="13" ry="10" fill="rgba(255,255,255,0.8)"/>
@@ -76,47 +76,50 @@ const LinkIcon = () => (
     </svg>
 );
 
-const SERVERS = [
-    { id: 1, name: 'Anime & Chill',  color: '#E74C3C', abbr: 'A' },
-    { id: 2, name: 'Dev Hub',        color: '#3498DB', abbr: 'D' },
-    { id: 3, name: 'Design System',  color: '#9B59B6', abbr: 'D' },
-    { id: 4, name: 'Music Lounge',   color: '#F39C12', abbr: 'M' },
-    { id: 5, name: 'OpenEmbed HQ',   color: '#5865F2', abbr: 'O' },
-    { id: 6, name: 'Chill Zone',     color: '#1ABC9C', abbr: 'C' },
-];
-
-const CHANNELS = [
-    { id: 1, name: 'general' },
-    { id: 2, name: 'announcements' },
-    { id: 3, name: 'bot-commands' },
-    { id: 4, name: 'media' },
-    { id: 5, name: 'introductions' },
-    { id: 6, name: 'off-topic' },
-];
-
-const FRIENDS = [
-    { id: 1, name: 'luna.dev',    avatar: '#E74C3C' },
-    { id: 2, name: 'pixel_cat',   avatar: '#9B59B6' },
-    { id: 3, name: 'neon.rabbit', avatar: '#F39C12' },
-    { id: 4, name: 'ghostwave',   avatar: '#1ABC9C' },
-];
-
-interface DropdownItem {
-    id: number;
-    name: string;
-    color?: string;
-    abbr?: string;
+interface Guild {
+    id:          string;
+    name:        string;
+    icon:        string | null;
+    owner:       boolean;
+    permissions: string;
 }
 
-function DiscordDropdown({ label, items, type, value, onChange }: {
-    label: string;
-    items: DropdownItem[];
-    type: 'server' | 'channel';
-    value: number | null;
-    onChange: (id: number) => void;
+interface Channel {
+    id:   string;
+    name: string;
+    type: number;
+}
+
+function guildAbbr(name: string) {
+    return name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+}
+
+function guildColor(id: string) {
+    const COLORS = ['#E74C3C','#3498DB','#9B59B6','#F39C12','#1ABC9C','#5865F2','#E67E22','#2ECC71'];
+    let n = 0;
+    for (let i = 0; i < id.length; i++) n = (n * 31 + id.charCodeAt(i)) >>> 0;
+    return COLORS[n % COLORS.length];
+}
+
+interface DropdownItem {
+    id:    string;
+    name:  string;
+    icon?: string | null;
+    color?: string;
+    abbr?:  string;
+}
+
+function DiscordDropdown({ label, items, type, value, onChange, loading, placeholder }: {
+    label:        string;
+    items:        DropdownItem[];
+    type:         'server' | 'channel';
+    value:        string | null;
+    onChange:     (id: string) => void;
+    loading?:     boolean;
+    placeholder?: string;
 }) {
     const [open, setOpen] = useState(false);
-    const [hov, setHov]   = useState<number | null>(null);
+    const [hov,  setHov]  = useState<string | null>(null);
     const ref             = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -131,22 +134,25 @@ function DiscordDropdown({ label, items, type, value, onChange }: {
         <div ref={ref} style={{ fontFamily: FONT }}>
             <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.9px', color: '#B5BAC1', marginBottom: 8 }}>{label}</div>
             <div
-                onClick={() => setOpen(o => !o)}
+                onClick={() => !loading && setOpen(o => !o)}
                 style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     background: '#1E1F22',
                     border: `1.5px solid ${open ? T.blurple : 'rgba(255,255,255,0.08)'}`,
                     borderRadius: open ? '6px 6px 0 0' : 6,
-                    padding: '9px 12px', cursor: 'pointer', userSelect: 'none',
+                    padding: '9px 12px', cursor: loading ? 'default' : 'pointer', userSelect: 'none',
                     transition: 'border-color 0.15s',
                     boxShadow: open ? `0 0 0 1px ${T.blurple}` : 'none',
+                    opacity: loading ? 0.6 : 1,
                 }}
             >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
                     {sel ? (
                         <>
                             {type === 'server' ? (
-                                <div style={{ width: 22, height: 22, borderRadius: 6, background: sel.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: '#fff', flexShrink: 0 }}>{sel.abbr}</div>
+                                sel.icon
+                                    ? <img src={`https://cdn.discordapp.com/icons/${sel.id}/${sel.icon}.webp?size=32`} alt="" style={{ width: 22, height: 22, borderRadius: 6, flexShrink: 0 }} />
+                                    : <div style={{ width: 22, height: 22, borderRadius: 6, background: sel.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: '#fff', flexShrink: 0 }}>{sel.abbr}</div>
                             ) : (
                                 <div style={{ width: 22, height: 22, borderRadius: 6, background: '#404249', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><HashIcon /></div>
                             )}
@@ -155,18 +161,18 @@ function DiscordDropdown({ label, items, type, value, onChange }: {
                             </span>
                         </>
                     ) : (
-                        <>
-                            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#23A55A', boxShadow: '0 0 0 2.5px rgba(35,165,90,0.22)', flexShrink: 0 }}/>
-                            <span style={{ fontSize: 13, fontWeight: 500, color: '#B5BAC1' }}>
-                                {items.length} {type === 'server' ? 'Mutual Servers' : 'Available'}
-                            </span>
-                        </>
+                        <span style={{ fontSize: 13, fontWeight: 500, color: '#80848E' }}>
+                            {loading ? 'Loading…' : (placeholder || `Select ${type}`)}
+                        </span>
                     )}
                 </div>
-                <Chevron open={open} />
+                {loading
+                    ? <div style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.2)', borderTopColor: '#B5BAC1', animation: 'spin 0.8s linear infinite', flexShrink: 0 }} />
+                    : <Chevron open={open} />
+                }
             </div>
 
-            {open && (
+            {open && items.length > 0 && (
                 <div style={{
                     background: '#111214',
                     border: '1.5px solid rgba(255,255,255,0.07)', borderTop: 'none',
@@ -177,7 +183,7 @@ function DiscordDropdown({ label, items, type, value, onChange }: {
                 }}>
                     <div style={{ padding: '8px 12px 6px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                         <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#4E5058' }}>
-                            {type === 'server' ? `${items.length} Mutual Servers` : `${items.length} Channels`}
+                            {type === 'server' ? `${items.length} server${items.length !== 1 ? 's' : ''}` : `${items.length} channel${items.length !== 1 ? 's' : ''}`}
                         </span>
                     </div>
                     {items.map(item => (
@@ -193,16 +199,16 @@ function DiscordDropdown({ label, items, type, value, onChange }: {
                             }}
                         >
                             {type === 'server' ? (
-                                <div style={{
-                                    width: 30, height: 30,
-                                    borderRadius: hov === item.id ? '50%' : 10,
-                                    background: item.color,
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    fontSize: 12, fontWeight: 700, color: '#fff', flexShrink: 0,
-                                    boxShadow: hov === item.id ? `0 2px 8px ${item.color}66` : 'none',
-                                    transition: 'border-radius 0.18s, box-shadow 0.18s',
-                                    userSelect: 'none',
-                                }}>{item.abbr}</div>
+                                item.icon
+                                    ? <img src={`https://cdn.discordapp.com/icons/${item.id}/${item.icon}.webp?size=32`} alt="" style={{ width: 30, height: 30, borderRadius: hov === item.id ? '50%' : 10, flexShrink: 0, transition: 'border-radius 0.18s' }} />
+                                    : <div style={{
+                                        width: 30, height: 30,
+                                        borderRadius: hov === item.id ? '50%' : 10,
+                                        background: item.color,
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        fontSize: 11, fontWeight: 700, color: '#fff', flexShrink: 0,
+                                        transition: 'border-radius 0.18s',
+                                    }}>{item.abbr}</div>
                             ) : (
                                 <div style={{ width: 30, height: 30, borderRadius: 8, background: hov === item.id ? '#404249' : '#2B2D31', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background 0.1s' }}>
                                     <HashIcon color={hov === item.id ? '#DBDEE1' : '#80848E'} />
@@ -214,76 +220,13 @@ function DiscordDropdown({ label, items, type, value, onChange }: {
                             {value === item.id && <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L5.5 10.5L11.5 4.5" stroke={T.blurple} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                         </div>
                     ))}
-                </div>
-            )}
-        </div>
-    );
-}
-
-function UserInfoPanel({ note, setNote, editing, setEditing }: {
-    note: string;
-    setNote: (v: string) => void;
-    editing: boolean;
-    setEditing: (v: boolean) => void;
-}) {
-    return (
-        <div style={{ background: T.surface, padding: 16, minHeight: 180 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: T.label, marginBottom: 8, fontFamily: FONT }}>Note</div>
-            {editing ? (
-                <textarea
-                    autoFocus
-                    value={note}
-                    onChange={e => setNote(e.target.value)}
-                    onBlur={() => setEditing(false)}
-                    placeholder="Click to add note"
-                    style={{
-                        width: '100%', background: 'rgba(255,255,255,0.04)',
-                        border: `1.5px solid rgba(88,101,242,0.65)`,
-                        borderRadius: 4, outline: 'none', resize: 'none',
-                        fontSize: 14, fontWeight: 400, color: T.white,
-                        fontFamily: FONT, lineHeight: 1.5,
-                        padding: '0',
-                        minHeight: 60,
-                        boxShadow: '0 0 0 1px rgba(88,101,242,0.25)',
-                    }}
-                />
-            ) : (
-                <div
-                    onClick={() => setEditing(true)}
-                    style={{ fontSize: 14, fontWeight: 400, color: note ? T.white : T.muted35, cursor: 'text', fontFamily: FONT, lineHeight: 1.5 }}
-                >
-                    {note || 'Click to add note'}
-                </div>
-            )}
-        </div>
-    );
-}
-
-function MutualServersPanel() {
-    const [val, setVal] = useState<number | null>(null);
-    return (
-        <div style={{ background: T.surface, padding: 16, minHeight: 180 }}>
-            <DiscordDropdown label="Mutual Servers" items={SERVERS} type="server" value={val} onChange={setVal}/>
-        </div>
-    );
-}
-
-function MutualFriendsPanel() {
-    return (
-        <div style={{ background: T.surface, padding: 16, minHeight: 180 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.9px', color: '#B5BAC1', marginBottom: 10, fontFamily: FONT }}>
-                Mutual Friends
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {FRIENDS.map(f => (
-                    <div key={f.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <div style={{ width: 32, height: 32, borderRadius: '50%', background: f.avatar, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
-                            {f.name[0].toUpperCase()}
+                    {open && items.length === 0 && !loading && (
+                        <div style={{ padding: '12px', textAlign: 'center', fontSize: 12, color: '#4E5058', fontFamily: FONT }}>
+                            No {type === 'server' ? 'servers' : 'channels'} found
                         </div>
-                        <span style={{ fontSize: 13, fontWeight: 500, color: '#DBDEE1', fontFamily: FONT }}>{f.name}</span>
-                    </div>
-                ))}
-            </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 }
@@ -299,17 +242,15 @@ function Toggle({ on, onChange, label }: { on: boolean; onChange: (v: boolean) =
     );
 }
 
-function LoadingScreen({ server, channel, onDone }: { server: number | null; channel: number | null; onDone: () => void }) {
+function LoadingScreen({ serverName, channelName, onDone }: { serverName: string; channelName: string; onDone: () => void }) {
     const [phase, setPhase] = useState(0);
-    const [dots, setDots]   = useState(0);
-    const svr = SERVERS.find(s => s.id === server);
-    const ch  = CHANNELS.find(c => c.id === channel);
+    const [dots,  setDots]  = useState(0);
 
     useEffect(() => {
         const dt = setInterval(() => setDots(d => (d + 1) % 4), 380);
         const t1 = setTimeout(() => setPhase(1), 1400);
         const t2 = setTimeout(() => setPhase(2), 2700);
-        const t3 = setTimeout(() => onDone(), 3900);
+        const t3 = setTimeout(() => onDone(),    3900);
         return () => { clearInterval(dt); clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
     }, []);
 
@@ -339,7 +280,7 @@ function LoadingScreen({ server, channel, onDone }: { server: number | null; cha
                 {phase === 2 ? 'All set!' : `Setting up${'.'.repeat(dots)}`}
             </div>
             <div style={{ fontSize: 12, color: '#80848E', fontFamily: FONT, marginBottom: 20, textAlign: 'center' }}>
-                {phase === 2 ? `Webhook live in #${ch?.name}` : 'Configuring your webhook…'}
+                {phase === 2 ? `Webhook live in #${channelName}` : 'Configuring your webhook…'}
             </div>
             <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {steps.map((s, i) => (
@@ -361,22 +302,24 @@ function LoadingScreen({ server, channel, onDone }: { server: number | null; cha
                     </div>
                 ))}
             </div>
-            {svr && ch && (
+            {serverName && channelName && (
                 <div style={{ marginTop: 18, display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 20, padding: '5px 12px' }}>
-                    <div style={{ width: 14, height: 14, borderRadius: 4, background: svr.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 700, color: '#fff' }}>{svr.abbr}</div>
-                    <span style={{ fontSize: 11, color: '#B5BAC1', fontFamily: FONT }}>{svr.name}</span>
+                    <span style={{ fontSize: 11, color: '#B5BAC1', fontFamily: FONT }}>{serverName}</span>
                     <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 10 }}>›</span>
                     <HashIcon color="#80848E"/>
-                    <span style={{ fontSize: 11, color: '#B5BAC1', fontFamily: FONT }}>{ch.name}</span>
+                    <span style={{ fontSize: 11, color: '#B5BAC1', fontFamily: FONT }}>{channelName}</span>
                 </div>
             )}
         </div>
     );
 }
 
-function SuccessScreen({ server, channel, webhookUrl, onReset }: { server: number | null; channel: number | null; webhookUrl: string; onReset: () => void }) {
-    const svr = SERVERS.find(s => s.id === server);
-    const ch  = CHANNELS.find(c => c.id === channel);
+function SuccessScreen({ serverName, channelName, webhookUrl, onReset }: {
+    serverName:  string;
+    channelName: string;
+    webhookUrl:  string;
+    onReset:     () => void;
+}) {
     const [copied, setCopied] = useState(false);
 
     return (
@@ -388,7 +331,7 @@ function SuccessScreen({ server, channel, webhookUrl, onReset }: { server: numbe
                 <div>
                     <div style={{ fontSize: 12, fontWeight: 700, color: '#23A55A', fontFamily: FONT }}>Webhook Connected</div>
                     <div style={{ fontSize: 11, color: '#80848E', fontFamily: FONT, marginTop: 1 }}>
-                        Messages will post to <span style={{ color: '#B5BAC1' }}>#{ch?.name}</span>
+                        Messages will post to <span style={{ color: '#B5BAC1' }}>#{channelName}</span>
                     </div>
                 </div>
             </div>
@@ -397,21 +340,18 @@ function SuccessScreen({ server, channel, webhookUrl, onReset }: { server: numbe
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: 12, color: '#80848E', fontFamily: FONT }}>Server</span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <div style={{ width: 14, height: 14, borderRadius: 4, background: svr?.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 700, color: '#fff' }}>{svr?.abbr}</div>
-                        <span style={{ fontSize: 12, color: '#DBDEE1', fontFamily: FONT }}>{svr?.name}</span>
-                    </div>
+                    <span style={{ fontSize: 12, color: '#DBDEE1', fontFamily: FONT }}>{serverName}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: 12, color: '#80848E', fontFamily: FONT }}>Channel</span>
-                    <span style={{ fontSize: 12, color: '#DBDEE1', fontFamily: FONT }}>#{ch?.name}</span>
+                    <span style={{ fontSize: 12, color: '#DBDEE1', fontFamily: FONT }}>#{channelName}</span>
                 </div>
             </div>
 
             <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.9px', color: '#B5BAC1', marginBottom: 8, fontFamily: FONT }}>Webhook URL</div>
             <div
-                onClick={() => setCopied(true)}
-                style={{ background: '#1E1F22', border: '1.5px solid rgba(255,255,255,0.07)', borderRadius: 6, padding: '8px 10px', cursor: 'pointer', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8, transition: 'border-color 0.15s' }}
+                onClick={() => { navigator.clipboard.writeText(webhookUrl).catch(() => {}); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+                style={{ background: '#1E1F22', border: '1.5px solid rgba(255,255,255,0.07)', borderRadius: 6, padding: '8px 10px', cursor: 'pointer', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}
             >
                 <LinkIcon/>
                 <span style={{ fontSize: 11, color: '#80848E', fontFamily: FONT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
@@ -422,7 +362,7 @@ function SuccessScreen({ server, channel, webhookUrl, onReset }: { server: numbe
                 </span>
             </div>
 
-            <div onClick={onReset} style={{ fontSize: 12, color: '#80848E', fontFamily: FONT, cursor: 'pointer', textAlign: 'center', transition: 'color 0.15s' }}>
+            <div onClick={onReset} style={{ fontSize: 12, color: '#80848E', fontFamily: FONT, cursor: 'pointer', textAlign: 'center' }}>
                 Start over
             </div>
         </div>
@@ -430,14 +370,78 @@ function SuccessScreen({ server, channel, webhookUrl, onReset }: { server: numbe
 }
 
 function SetupPanel() {
-    const [step,     setStep]     = useState('server');
-    const [server,   setServer]   = useState<number | null>(null);
-    const [channel,  setChannel]  = useState<number | null>(null);
+    const [step,    setStep]    = useState<'server'|'channel'|'config'|'loading'|'done'>('server');
+    const [guilds,  setGuilds]  = useState<Guild[]>([]);
+    const [channels, setChannels] = useState<Channel[]>([]);
+    const [guildsLoading,   setGuildsLoading]   = useState(false);
+    const [channelsLoading, setChannelsLoading] = useState(false);
+    const [guildsError,     setGuildsError]     = useState('');
+    const [channelsError,   setChannelsError]   = useState('');
+    const [requiresDiscord, setRequiresDiscord] = useState(false);
+    const [server,   setServer]   = useState<string | null>(null);
+    const [channel,  setChannel]  = useState<string | null>(null);
     const [webhook,  setWebhook]  = useState('');
     const [urlFocus, setUrlFocus] = useState(false);
     const [notify,   setNotify]   = useState(true);
     const [mentions, setMentions] = useState(false);
     const [btnHov,   setBtnHov]   = useState(false);
+
+    useEffect(() => {
+        setGuildsLoading(true);
+        setGuildsError('');
+        fetch('/api/auth/guilds', { credentials: 'include' })
+            .then(r => r.json())
+            .then(data => {
+                if (data.requiresDiscord) {
+                    setRequiresDiscord(true);
+                } else if (data.error) {
+                    setGuildsError(data.error);
+                } else {
+                    const sorted = [...(data.guilds || [])].sort((a: Guild, b: Guild) => a.name.localeCompare(b.name));
+                    setGuilds(sorted);
+                }
+            })
+            .catch(() => setGuildsError('Failed to load servers.'))
+            .finally(() => setGuildsLoading(false));
+    }, []);
+
+    const selectServer = (id: string) => {
+        setServer(id);
+        setChannel(null);
+        setChannels([]);
+        setChannelsError('');
+        setChannelsLoading(true);
+        fetch(`/api/bot/guilds/${id}/channels`, { credentials: 'include' })
+            .then(r => r.json())
+            .then(data => {
+                if (Array.isArray(data)) {
+                    const text = data
+                        .filter((c: Channel) => c.type === 0)
+                        .sort((a: Channel, b: Channel) => a.name.localeCompare(b.name));
+                    setChannels(text);
+                } else {
+                    setChannelsError(data?.message || 'Could not load channels. Is the bot in this server?');
+                }
+            })
+            .catch(() => setChannelsError('Failed to load channels.'))
+            .finally(() => setChannelsLoading(false));
+    };
+
+    const guildItems: DropdownItem[] = guilds.map(g => ({
+        id:    g.id,
+        name:  g.name,
+        icon:  g.icon,
+        color: guildColor(g.id),
+        abbr:  guildAbbr(g.name),
+    }));
+
+    const channelItems: DropdownItem[] = channels.map(c => ({
+        id:   c.id,
+        name: c.name,
+    }));
+
+    const selGuild   = guilds.find(g => g.id === server);
+    const selChannel = channels.find(c => c.id === channel);
 
     const NxtBtn = ({ onClick, label = 'Next', icon = <ArrowRight/> }: { onClick: () => void; label?: string; icon?: React.ReactNode }) => (
         <button onClick={onClick}
@@ -455,12 +459,12 @@ function SetupPanel() {
     );
 
     const BackLink = ({ onClick }: { onClick: () => void }) => (
-        <span onClick={onClick} style={{ fontSize: 12, color: '#80848E', fontFamily: FONT, cursor: 'pointer', transition: 'color 0.15s' }}>← Back</span>
+        <span onClick={onClick} style={{ fontSize: 12, color: '#80848E', fontFamily: FONT, cursor: 'pointer' }}>← Back</span>
     );
 
     const StepDots = () => {
-        const steps = ['server', 'channel', 'config'];
-        const idx = steps.indexOf(step);
+        const steps: Array<'server'|'channel'|'config'> = ['server', 'channel', 'config'];
+        const idx = steps.indexOf(step as any);
         return (
             <div style={{ display: 'flex', alignItems: 'center', padding: '12px 16px 0', gap: 0, marginBottom: 0 }}>
                 {steps.map((s, i) => {
@@ -492,57 +496,111 @@ function SetupPanel() {
         );
     };
 
-    if (step === 'loading') return <LoadingScreen server={server} channel={channel} onDone={() => setStep('done')}/>;
-    if (step === 'done')    return <SuccessScreen server={server} channel={channel} webhookUrl={webhook} onReset={() => { setStep('server'); setServer(null); setChannel(null); setWebhook(''); }}/>;
+    if (step === 'loading') return (
+        <LoadingScreen
+            serverName={selGuild?.name || ''}
+            channelName={selChannel?.name || ''}
+            onDone={() => setStep('done')}
+        />
+    );
+    if (step === 'done') return (
+        <SuccessScreen
+            serverName={selGuild?.name || ''}
+            channelName={selChannel?.name || ''}
+            webhookUrl={webhook}
+            onReset={() => { setStep('server'); setServer(null); setChannel(null); setWebhook(''); setChannels([]); }}
+        />
+    );
 
     return (
         <div style={{ background: T.surface }}>
             <StepDots/>
             <div style={{ padding: '12px 16px 18px' }}>
+
+                {/* ── Step 1: Server ── */}
                 {step === 'server' && (
                     <>
-                        <DiscordDropdown label="Select Server" items={SERVERS} type="server" value={server} onChange={setServer}/>
-                        {server && (
-                            <div style={{ marginTop: 12, display: 'flex', justifyContent: 'flex-end' }}>
-                                <NxtBtn onClick={() => setStep('channel')}/>
+                        {requiresDiscord ? (
+                            <div style={{ background: 'rgba(88,101,242,0.1)', border: '1px solid rgba(88,101,242,0.25)', borderRadius: 8, padding: '14px 16px', textAlign: 'center' }}>
+                                <div style={{ fontSize: 22, marginBottom: 6 }}>🔑</div>
+                                <div style={{ fontSize: 13, fontWeight: 600, color: '#DBDEE1', fontFamily: FONT, marginBottom: 4 }}>Discord login required</div>
+                                <div style={{ fontSize: 12, color: '#80848E', fontFamily: FONT, lineHeight: 1.5 }}>
+                                    Sign in with Discord to see your servers where you have admin or ownership permissions.
+                                </div>
                             </div>
+                        ) : guildsError ? (
+                            <div style={{ background: 'rgba(240,71,71,0.1)', border: '1px solid rgba(240,71,71,0.25)', borderRadius: 6, padding: '10px 12px', fontSize: 12, color: '#f04747', fontFamily: FONT }}>{guildsError}</div>
+                        ) : (
+                            <>
+                                <DiscordDropdown
+                                    label="Select Server"
+                                    items={guildItems}
+                                    type="server"
+                                    value={server}
+                                    onChange={selectServer}
+                                    loading={guildsLoading}
+                                    placeholder={guildsLoading ? 'Loading servers…' : guilds.length === 0 ? 'No admin servers found' : 'Choose a server'}
+                                />
+                                {!guildsLoading && guilds.length === 0 && (
+                                    <div style={{ marginTop: 8, fontSize: 11, color: '#4E5058', fontFamily: FONT, lineHeight: 1.5 }}>
+                                        No servers where you have Administrator permissions or ownership were found.
+                                    </div>
+                                )}
+                                {server && (
+                                    <div style={{ marginTop: 12, display: 'flex', justifyContent: 'flex-end' }}>
+                                        <NxtBtn onClick={() => setStep('channel')}/>
+                                    </div>
+                                )}
+                            </>
                         )}
                     </>
                 )}
 
+                {/* ── Step 2: Channel ── */}
                 {step === 'channel' && (
                     <>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-                            {(() => { const s = SERVERS.find(x => x.id === server); return (
-                                <>
-                                    <div style={{ width: 16, height: 16, borderRadius: 5, background: s?.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 700, color: '#fff' }}>{s?.abbr}</div>
-                                    <span style={{ fontSize: 12, color: '#80848E', fontFamily: FONT }}>{s?.name}</span>
-                                </>
-                            ); })()}
+                            {selGuild?.icon
+                                ? <img src={`https://cdn.discordapp.com/icons/${selGuild.id}/${selGuild.icon}.webp?size=16`} alt="" style={{ width: 16, height: 16, borderRadius: 4, flexShrink: 0 }} />
+                                : <div style={{ width: 16, height: 16, borderRadius: 5, background: guildColor(selGuild?.id || ''), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 700, color: '#fff' }}>{guildAbbr(selGuild?.name || '')}</div>
+                            }
+                            <span style={{ fontSize: 12, color: '#80848E', fontFamily: FONT }}>{selGuild?.name}</span>
                             <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 12 }}>›</span>
                             <span style={{ fontSize: 12, color: '#B5BAC1', fontWeight: 500, fontFamily: FONT }}>Pick a channel</span>
                         </div>
-                        <DiscordDropdown label="Select Channel" items={CHANNELS} type="channel" value={channel} onChange={setChannel}/>
+                        {channelsError ? (
+                            <div style={{ background: 'rgba(240,71,71,0.1)', border: '1px solid rgba(240,71,71,0.25)', borderRadius: 6, padding: '10px 12px', fontSize: 12, color: '#f04747', fontFamily: FONT }}>{channelsError}</div>
+                        ) : (
+                            <DiscordDropdown
+                                label="Select Channel"
+                                items={channelItems}
+                                type="channel"
+                                value={channel}
+                                onChange={setChannel}
+                                loading={channelsLoading}
+                                placeholder={channelsLoading ? 'Loading channels…' : 'Choose a channel'}
+                            />
+                        )}
                         <div style={{ marginTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <BackLink onClick={() => setStep('server')}/>
-                            {channel && <NxtBtn onClick={() => setStep('config')}/>}
+                            {channel && !channelsError && <NxtBtn onClick={() => setStep('config')}/>}
                         </div>
                     </>
                 )}
 
+                {/* ── Step 3: Config ── */}
                 {step === 'config' && (
                     <>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 14, flexWrap: 'wrap' }}>
-                            {(() => { const s = SERVERS.find(x => x.id === server); const c = CHANNELS.find(x => x.id === channel); return (
-                                <>
-                                    <div style={{ width: 14, height: 14, borderRadius: 4, background: s?.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 700, color: '#fff' }}>{s?.abbr}</div>
-                                    <span style={{ fontSize: 11, color: '#80848E', fontFamily: FONT }}>{s?.name}</span>
-                                    <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 11 }}>›</span>
-                                    <span style={{ fontSize: 11, color: '#80848E', fontFamily: FONT }}>#{c?.name}</span>
-                                    <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 11 }}>›</span>
-                                    <span style={{ fontSize: 11, color: '#B5BAC1', fontWeight: 500, fontFamily: FONT }}>Config</span>
-                                </>
-                            ); })()}
+                            {selGuild?.icon
+                                ? <img src={`https://cdn.discordapp.com/icons/${selGuild.id}/${selGuild.icon}.webp?size=16`} alt="" style={{ width: 14, height: 14, borderRadius: 4, flexShrink: 0 }} />
+                                : <div style={{ width: 14, height: 14, borderRadius: 4, background: guildColor(selGuild?.id || ''), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 700, color: '#fff' }}>{guildAbbr(selGuild?.name || '')}</div>
+                            }
+                            <span style={{ fontSize: 11, color: '#80848E', fontFamily: FONT }}>{selGuild?.name}</span>
+                            <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 11 }}>›</span>
+                            <span style={{ fontSize: 11, color: '#80848E', fontFamily: FONT }}>#{selChannel?.name}</span>
+                            <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 11 }}>›</span>
+                            <span style={{ fontSize: 11, color: '#B5BAC1', fontWeight: 500, fontFamily: FONT }}>Config</span>
                         </div>
 
                         <div style={{ marginBottom: 14 }}>
@@ -583,18 +641,63 @@ function SetupPanel() {
     );
 }
 
+function UserInfoPanel({ user }: { user: ReturnType<typeof useAuth>['user'] }) {
+    const isDiscord = user?.provider === 'discord';
+    const displayName = user?.username || user?.email?.split('@')[0] || 'Unknown';
+    const avatarUrl = isDiscord && user?.avatar && user?.id
+        ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=64`
+        : null;
+
+    return (
+        <div style={{ background: T.surface, padding: 16, minHeight: 180 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: T.label, marginBottom: 12, fontFamily: FONT }}>Account</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                <div style={{ width: 40, height: 40, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: '#4752C4' }}>
+                    {avatarUrl
+                        ? <img src={avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        : <AvatarPlaceholder size={40} />
+                    }
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', fontFamily: FONT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayName}</div>
+                    {user?.email && (
+                        <div style={{ fontSize: 11, color: '#80848E', fontFamily: FONT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 1 }}>{user.email}</div>
+                    )}
+                </div>
+                <div style={{
+                    fontSize: 10, fontWeight: 700, color: isDiscord ? '#fff' : '#B5BAC1',
+                    background: isDiscord ? T.blurple : 'rgba(255,255,255,0.08)',
+                    borderRadius: 20, padding: '2px 8px', letterSpacing: '0.05em',
+                    fontFamily: FONT, flexShrink: 0,
+                }}>
+                    {isDiscord ? 'Discord' : 'Email'}
+                </div>
+            </div>
+
+            <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', marginBottom: 12 }} />
+
+            <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: T.label, marginBottom: 8, fontFamily: FONT }}>About</div>
+            <div style={{ fontSize: 12, color: '#80848E', fontFamily: FONT, lineHeight: 1.6 }}>
+                Build and send Discord message components — buttons, embeds, select menus, and more — directly to your server via webhook or bot.
+            </div>
+            {!isDiscord && (
+                <div style={{ marginTop: 12, background: 'rgba(88,101,242,0.1)', border: '1px solid rgba(88,101,242,0.2)', borderRadius: 6, padding: '8px 10px', fontSize: 11, color: '#7289da', fontFamily: FONT, lineHeight: 1.5 }}>
+                    Sign in with Discord to unlock server integration and Rich Presence features.
+                </div>
+            )}
+        </div>
+    );
+}
+
 const TABS = [
-    { id: 'info',    label: 'User\nInfo' },
-    { id: 'servers', label: 'Mutual\nServers' },
-    { id: 'friends', label: 'Mutual\nFriends' },
-    { id: 'setup',   label: 'Setup', icon: true },
+    { id: 'info',  label: 'User\nInfo' },
+    { id: 'setup', label: 'Setup', icon: true },
 ];
 
 export function DiscordCard() {
-    const [tab,         setTab]         = useState('info');
-    const [note,        setNote]        = useState('');
-    const [editingNote, setEditingNote] = useState(false);
-    const [elapsed,     setElapsed]     = useState('1:24:07');
+    const { user } = useAuth();
+    const [tab,     setTab]     = useState('info');
+    const [elapsed, setElapsed] = useState('1:24:07');
 
     useEffect(() => {
         let s = 5047;
@@ -605,6 +708,11 @@ export function DiscordCard() {
         }, 1000);
         return () => clearInterval(t);
     }, []);
+
+    const displayName = user?.username || user?.email?.split('@')[0] || '…';
+    const avatarUrl = user?.provider === 'discord' && user?.avatar && user?.id
+        ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=64`
+        : null;
 
     return (
         <div style={{ fontFamily: FONT }}>
@@ -625,10 +733,13 @@ export function DiscordCard() {
                 {/* ── Blurple top panel ── */}
                 <div style={{ background: T.blurple, padding: '16px 16px 0 16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
-                        <div style={{ width: 40, height: 40, borderRadius: '50%', overflow: 'hidden', marginRight: 12, flexShrink: 0 }}>
-                            <AvatarPlaceholder/>
+                        <div style={{ width: 40, height: 40, borderRadius: '50%', overflow: 'hidden', marginRight: 12, flexShrink: 0, background: '#4752C4' }}>
+                            {avatarUrl
+                                ? <img src={avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                : <AvatarPlaceholder size={40} />
+                            }
                         </div>
-                        <span style={{ fontSize: 18, fontWeight: 700, color: T.white, lineHeight: 1.2, fontFamily: FONT }}>just.tiwari</span>
+                        <span style={{ fontSize: 18, fontWeight: 700, color: T.white, lineHeight: 1.2, fontFamily: FONT }}>{displayName}</span>
                     </div>
 
                     <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: T.label, marginBottom: 8, fontFamily: FONT }}>
@@ -674,10 +785,8 @@ export function DiscordCard() {
 
                 {/* ── Tab panels ── */}
                 <div>
-                    {tab === 'info'    && <UserInfoPanel note={note} setNote={setNote} editing={editingNote} setEditing={setEditingNote}/>}
-                    {tab === 'servers' && <MutualServersPanel/>}
-                    {tab === 'friends' && <MutualFriendsPanel/>}
-                    {tab === 'setup'   && <SetupPanel/>}
+                    {tab === 'info'  && <UserInfoPanel user={user} />}
+                    {tab === 'setup' && <SetupPanel />}
                 </div>
             </div>
         </div>

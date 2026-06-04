@@ -126,9 +126,9 @@ router.get('/discord', (req, res) => {
         client_id:     clientId,
         redirect_uri:  redirectUri,
         response_type: 'code',
-        scope:         'identify email',
+        scope:         'identify email guilds',
         state,
-        prompt:        'none',
+        prompt:        'consent',
     });
 
     res.redirect(`https://discord.com/api/oauth2/authorize?${params}`);
@@ -190,12 +190,13 @@ router.get('/discord/callback', async (req, res) => {
         const discordUser = await userRes.json();
 
         req.session.user = {
-            id:            discordUser.id,
-            email:         discordUser.email || null,
-            username:      discordUser.username,
-            discriminator: discordUser.discriminator,
-            avatar:        discordUser.avatar,
-            provider:      'discord',
+            id:                 discordUser.id,
+            email:              discordUser.email || null,
+            username:           discordUser.username,
+            discriminator:      discordUser.discriminator,
+            avatar:             discordUser.avatar,
+            provider:           'discord',
+            discordAccessToken: access_token,
         };
 
         // Set Discord Rich Presence so the activity shows on their profile
@@ -212,7 +213,45 @@ router.get('/discord/callback', async (req, res) => {
 // ── GET /api/auth/user ────────────────────────────────────────────────────────
 router.get('/user', (req, res) => {
     if (!req.session?.user) return res.status(401).json({ message: 'Unauthorized' });
-    res.json(req.session.user);
+    const { discordAccessToken, ...safeUser } = req.session.user;
+    res.json(safeUser);
+});
+
+// ── GET /api/auth/guilds ──────────────────────────────────────────────────────
+// Returns the guilds where the Discord-authenticated user is an admin or owner.
+// Requires the guilds OAuth2 scope (prompt: consent on login).
+router.get('/guilds', async (req, res) => {
+    if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { discordAccessToken, provider } = req.session.user;
+
+    if (provider !== 'discord' || !discordAccessToken) {
+        return res.json({ guilds: [], requiresDiscord: true });
+    }
+
+    try {
+        const r = await fetch('https://discord.com/api/v10/users/@me/guilds', {
+            headers: { Authorization: `Bearer ${discordAccessToken}` },
+        });
+
+        if (!r.ok) {
+            const body = await r.text();
+            console.error('[Guilds] Discord API error:', r.status, body);
+            return res.status(r.status).json({ error: 'Failed to fetch guilds from Discord.' });
+        }
+
+        const allGuilds = await r.json();
+
+        const ADMIN_BIT = 0x8n;
+        const adminGuilds = allGuilds.filter(g =>
+            g.owner === true || (BigInt(g.permissions || '0') & ADMIN_BIT) !== 0n
+        );
+
+        res.json({ guilds: adminGuilds });
+    } catch (e) {
+        console.error('[Guilds] Error:', e.message);
+        res.status(500).json({ error: 'Failed to fetch guilds.' });
+    }
 });
 
 // ── POST /api/auth/logout ─────────────────────────────────────────────────────
