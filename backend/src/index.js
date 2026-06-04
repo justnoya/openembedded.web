@@ -12,7 +12,8 @@ const sessionMiddleware = require('./middleware/session');
 const { router: authRouter, initAuth } = require('./routes/auth');
 const botRouter         = require('./routes/bot');
 const { loadActionsFromDb } = require('./lib/db');
-const { setButtonActions }  = require('./lib/gateway');
+const { setButtonActions, gwConnect } = require('./lib/gateway');
+const { discordFetch } = require('./lib/discordFetch');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -56,6 +57,23 @@ if (require.main === module) {
         const savedActions = await loadActionsFromDb();
         if (Object.keys(savedActions).length > 0) {
             setButtonActions(savedActions);
+        }
+
+        // ── Auto-connect official bot from env ────────────────────────────────
+        const envToken = process.env.DISCORD_BOT_TOKEN;
+        if (envToken) {
+            console.log('[Server] DISCORD_BOT_TOKEN found — auto-connecting bot...');
+            try {
+                const guilds = await discordFetch('/users/@me/guilds', envToken);
+                const { botState } = require('./lib/gateway');
+                botState.token  = envToken;
+                botState.guilds = Array.isArray(guilds)
+                    ? guilds.sort((a, b) => a.name.localeCompare(b.name))
+                    : [];
+                gwConnect(envToken);
+            } catch (err) {
+                console.error('[Server] Auto-connect failed:', err.message);
+            }
         }
 
         const PORT = process.env.PORT || process.env.BOT_SERVER_PORT || (isProd ? 8080 : 3001);
