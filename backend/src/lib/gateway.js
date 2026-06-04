@@ -271,6 +271,11 @@ function gwConnect(token, gatewayUrl = GATEWAY_URL) {
                     botState.status           = 'connected';
                     reconnectAttempts         = 0;
                     console.log(`[Gateway] Ready! Bot: ${d.user?.username}#${d.user?.discriminator}`);
+                    gwUpdatePresence({
+                        type: 0,
+                        name: 'OpenEmbedded',
+                        url:  'https://discord.builders',
+                    });
                 }
                 if (t === 'RESUMED') {
                     botState.status   = 'connected';
@@ -336,6 +341,25 @@ function gwDisconnect() {
     reconnectAttempts        = 0;
 }
 
+/**
+ * Update the bot's own Gateway presence (OP 3).
+ * This sets what Discord servers see on the bot's profile while it is connected.
+ * Pass null to clear the activity and show only "online".
+ * @param {object|null} activity
+ */
+function gwUpdatePresence(activity = null) {
+    gwSend({
+        op: 3,
+        d: {
+            since:      null,
+            activities: activity ? [activity] : [],
+            status:     'online',
+            afk:        false,
+        },
+    });
+    console.log(`[Gateway] Presence updated: ${activity ? activity.name : '(cleared)'}`);
+}
+
 function setButtonActions(actions) {
     buttonActions = actions;
 }
@@ -344,4 +368,4 @@ function getButtonActions() {
     return buttonActions;
 }
 
-module.exports = { botState, gwConnect, gwDisconnect, setButtonActions, getButtonActions };
+module.exports = { botState, gwConnect, gwDisconnect, gwUpdatePresence, setButtonActions, getButtonActions };

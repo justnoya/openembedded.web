@@ -1,9 +1,20 @@
 const express = require('express');
-const { botState, gwConnect, gwDisconnect, setButtonActions } = require('../lib/gateway');
+const { botState, gwConnect, gwDisconnect, gwUpdatePresence, setButtonActions } = require('../lib/gateway');
 const { discordFetch } = require('../lib/discordFetch');
 const { saveActionsToDb } = require('../lib/db');
 
 const router = express.Router();
+
+// ── POST /api/bot/presence ────────────────────────────────────────────────────
+// Update the bot's own Gateway presence (what servers see on the bot's profile).
+// Body: { activity: { type, name, url? } | null }
+// Pass activity: null to clear the activity (bot shows as online with no status).
+router.post('/presence', (req, res) => {
+    if (!botState.token) return res.status(400).json({ error: 'Bot not connected.' });
+    const { activity } = req.body || {};
+    gwUpdatePresence(activity ?? null);
+    res.json({ ok: true });
+});
 
 // ── POST /api/bot/actions — register button → action-step mappings ────────────
 router.post('/actions', async (req, res) => {
