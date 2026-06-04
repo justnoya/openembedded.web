@@ -227,7 +227,11 @@ function App() {
                         <span key={lang} className={Styles.lang} onClick={() => i18next.changeLanguage(lang)}>{lang}</span>
                     ))}
                 </div>
-                <div style={{color: '#4e5058', fontSize: '1.2rem'}}>© {new Date().getFullYear()} OpenEmbedded</div>
+                <div style={{display: 'flex', alignItems: 'center', gap: '1.2rem', flexWrap: 'wrap', justifyContent: 'flex-end'}}>
+                    <a href="/terms" style={{color: '#4e5058', fontSize: '0.85rem', textDecoration: 'none'}} onMouseOver={e => (e.currentTarget.style.color='#72767d')} onMouseOut={e => (e.currentTarget.style.color='#4e5058')}>Terms</a>
+                    <a href="/privacy" style={{color: '#4e5058', fontSize: '0.85rem', textDecoration: 'none'}} onMouseOver={e => (e.currentTarget.style.color='#72767d')} onMouseOut={e => (e.currentTarget.style.color='#4e5058')}>Privacy</a>
+                    <div style={{color: '#4e5058', fontSize: '1.2rem'}}>© {new Date().getFullYear()} OpenEmbedded</div>
+                </div>
             </div>
         </div>
     </div>

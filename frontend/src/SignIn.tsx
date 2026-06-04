@@ -310,6 +310,13 @@ export function SignIn() {
                     </svg>
                     Continue with Discord
                 </button>
+
+                <p className={Styles.legal}>
+                    By signing in you agree to our{' '}
+                    <a href="/terms">Terms of Service</a>
+                    {' '}and{' '}
+                    <a href="/privacy">Privacy Policy</a>.
+                </p>
             </div>
         </div>
     );

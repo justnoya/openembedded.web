@@ -364,3 +364,20 @@
         color: #b9bbbe;
     }
 }
+
+.legal {
+    margin-top: 1.6rem;
+    font-size: 1.2rem;
+    color: #72767d;
+    text-align: center;
+    line-height: 1.5;
+
+    a {
+        color: #00aff4;
+        text-decoration: none;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+}

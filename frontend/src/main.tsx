@@ -14,6 +14,8 @@ import { useAuth } from './hooks/useAuth';
 import { useDiscordPresence } from './hooks/useDiscordPresence';
 import { SignIn } from './SignIn';
 import { ToastProvider } from './Toast';
+import { TermsPage } from './TermsPage';
+import { PrivacyPage } from './PrivacyPage';
 
 function AuthGate() {
     const { user, isAuthenticated, isLoading } = useAuth();
@@ -65,12 +67,21 @@ function AuthGate() {
     );
 }
 
+function Root() {
+    const path = window.location.pathname.replace(/\/$/, '');
+    if (path === '/terms')   return <TermsPage />;
+    if (path === '/privacy') return <PrivacyPage />;
+    return (
+        <ToastProvider>
+            <AuthGate />
+        </ToastProvider>
+    );
+}
+
 const root = createRoot(document.getElementById('root')!);
 
 root.render(
   <StrictMode>
-    <ToastProvider>
-      <AuthGate />
-    </ToastProvider>
+    <Root />
   </StrictMode>,
 )

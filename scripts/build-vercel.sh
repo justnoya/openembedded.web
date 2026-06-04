@@ -6,6 +6,9 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 YARN="node ${REPO_ROOT}/.yarn/releases/yarn.cjs"
 
 echo "▶ Yarn version: $(${YARN} --version)"
+echo "▶ Building database package..."
+${YARN} workspace database build
+
 echo "▶ Building components-sdk..."
 ${YARN} workspace components-sdk build
 
