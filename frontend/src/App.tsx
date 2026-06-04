@@ -19,6 +19,7 @@ import { ActionMenuComponent } from './ActionMenu';
 import { UserProfile } from './UserProfile';
 import { ApiResponseCard } from './ApiResponseCard';
 import { ErrorFallback } from './ErrorFallback';
+import { DiscordCard } from './DiscordCard';
 import { useToast } from './Toast';
 import { useSeoMeta } from './useSeoMeta';
 
@@ -213,6 +214,10 @@ function App() {
                     onDismiss={() => dispatch(actions.setWebhookResponse(null))}
                 />
             )}
+
+            <div style={{ marginTop: '2rem', marginBottom: '2rem' }}>
+                <DiscordCard />
+            </div>
 
             <Codegen state={state} page={page} setPage={setPage} />
 
