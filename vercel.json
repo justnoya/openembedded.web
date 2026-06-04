@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "installCommand": "curl -fsSL https://repo.yarnpkg.com/4.10.3/packages/yarnpkg-cli/bin/yarn.js -o /tmp/yarn4.js && node /tmp/yarn4.js install",
+  "installCommand": "yarn install",
   "buildCommand": "bash scripts/build-vercel.sh",
   "outputDirectory": "frontend/dist",
   "rewrites": [
