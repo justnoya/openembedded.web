@@ -2357,6 +2357,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "discord-bot@workspace:discord-bot"
   dependencies:
+    dotenv: "npm:^16.4.5"
+    postgres: "npm:^3.4.5"
     ws: "npm:^8.18.0"
   languageName: unknown
   linkType: soft
@@ -2375,6 +2377,13 @@ __metadata:
     "@babel/runtime": "npm:^7.8.7"
     csstype: "npm:^3.0.2"
   checksum: 10c0/f735074d66dd759b36b158fa26e9d00c9388ee0e8c9b16af941c38f014a37fc80782de83afefd621681b19ac0501034b4f1c4a3bff5caa1b8667f0212b5e124c
+  languageName: node
+  linkType: hard
+
+"dotenv@npm:^16.4.5":
+  version: 16.6.1
+  resolution: "dotenv@npm:16.6.1"
+  checksum: 10c0/15ce56608326ea0d1d9414a5c8ee6dcf0fffc79d2c16422b4ac2268e7e2d76ff5a572d37ffe747c377de12005f14b3cc22361e79fc7f1061cce81f77d2c973dc
   languageName: node
   linkType: hard
 
