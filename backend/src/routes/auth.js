@@ -130,7 +130,7 @@ router.get('/discord', (req, res) => {
         client_id:     clientId,
         redirect_uri:  redirectUri,
         response_type: 'code',
-        scope:         'identify email guilds bot applications.commands',
+        scope:         'identify email guilds bot applications.commands activities.write',
         permissions:   '8',
         state,
         prompt:        'consent',
