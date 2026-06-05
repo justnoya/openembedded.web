@@ -2,7 +2,8 @@
 
 echo "Clearing stale port bindings..."
 fuser -k 3001/tcp 2>/dev/null || true
-sleep 0.5
+fuser -k 5000/tcp 2>/dev/null || true
+sleep 1
 
 echo "Installing dependencies..."
 node .yarn/releases/yarn.cjs install
@@ -14,7 +15,7 @@ echo "Starting bot server..."
 node .yarn/releases/yarn.cjs workspace backend start &
 BOT_PID=$!
 
-sleep 1
+sleep 2
 
 echo "Starting dev server..."
 node .yarn/releases/yarn.cjs workspace frontend dev
