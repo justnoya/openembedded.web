@@ -13,8 +13,8 @@
 FROM node:20-alpine
 
 LABEL org.opencontainers.image.title="OpenEmbedded Bot"
-LABEL org.opencontainers.image.description="Discord bot for discord.builders"
-LABEL org.opencontainers.image.source="https://github.com/your-org/openembedded"
+LABEL org.opencontainers.image.description="Self-hosted Discord bot for OpenEmbedded"
+LABEL org.opencontainers.image.source="https://github.com/Dhuruvdev/OpenEmbedded.bot"
 
 WORKDIR /app
 
@@ -27,7 +27,7 @@ COPY src/ ./src/
 
 ENV NODE_ENV=production
 
-# Health-check: verify the process is alive (Discord bots don't expose HTTP)
+# Health-check: verify the process is alive
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
     CMD node -e "process.exit(0)"
 

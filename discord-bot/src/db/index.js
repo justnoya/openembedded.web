@@ -66,4 +66,42 @@ async function pingDb() {
 
 function isConnected() { return _connected; }
 
-module.exports = { getDb, pingDb, isConnected };
+/**
+ * Create all required tables if they don't exist yet.
+ * Safe to call on every startup — uses IF NOT EXISTS.
+ * Call this once before the bot connects so a fresh deployment
+ * never fails with "relation does not exist".
+ *
+ * @returns {Promise<void>}
+ */
+async function initDb() {
+    const sql = getDb();
+    if (!sql) {
+        log.warn('DATABASE_URL not set — skipping schema init');
+        return;
+    }
+    try {
+        await sql`
+            CREATE TABLE IF NOT EXISTS button_actions (
+                custom_id  TEXT        PRIMARY KEY,
+                steps      JSONB       NOT NULL DEFAULT '[]',
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+            )
+        `;
+        await sql`
+            CREATE TABLE IF NOT EXISTS sent_messages (
+                id           TEXT        PRIMARY KEY DEFAULT gen_random_uuid()::text,
+                channel_id   TEXT        NOT NULL,
+                guild_id     TEXT,
+                payload      JSONB       NOT NULL DEFAULT '{}',
+                sent_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+                sent_by_email TEXT
+            )
+        `;
+        log.info('Schema initialised — all required tables exist');
+    } catch (err) {
+        log.error('Schema init failed:', err.message);
+    }
+}
+
+module.exports = { getDb, pingDb, isConnected, initDb };
