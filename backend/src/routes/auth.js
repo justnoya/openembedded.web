@@ -204,7 +204,8 @@ router.get('/discord/callback', async (req, res) => {
         userPresence.set(discordUser.id, access_token, applicationId).catch(() => {});
 
         console.log(`[Auth/Discord] Logged in: ${discordUser.username} (${discordUser.id})`);
-        res.redirect(`${appUrl}?discord_connected=1`);
+        // Send user to the bot-invite step before loading the app
+        res.redirect(`${appUrl}?invite_bot=1`);
     } catch (err) {
         console.error('[Auth/Discord] Unexpected error:', err.message);
         res.redirect(`${appUrl}?error=discord_error`);
@@ -275,6 +276,46 @@ router.post('/presence/refresh', (req, res) => {
     userPresence.refresh(user.id, applicationId)
         .then(ok => res.json({ ok }))
         .catch(() => res.json({ ok: false }));
+});
+
+// ── GET /api/auth/discord/invite ──────────────────────────────────────────────
+// Redirects the (already-authenticated) user to Discord's bot-add OAuth page.
+// Requires the user to select a server — permissions=8 = Administrator.
+router.get('/discord/invite', (req, res) => {
+    const clientId = process.env.DISCORD_CLIENT_ID;
+    if (!clientId)
+        return res.status(503).send('DISCORD_CLIENT_ID not configured.');
+
+    const appUrl        = buildAppUrl(req);
+    const botCallbackUri = `${appUrl}/api/auth/discord/bot-invited`;
+
+    const params = new URLSearchParams({
+        client_id:     clientId,
+        permissions:   '8',                       // Administrator
+        scope:         'bot applications.commands',
+        redirect_uri:  botCallbackUri,
+        response_type: 'code',
+    });
+
+    console.log(`[Auth/Discord] Redirecting to bot invite (permissions=8, Administrator)`);
+    res.redirect(`https://discord.com/api/oauth2/authorize?${params}`);
+});
+
+// ── GET /api/auth/discord/bot-invited ─────────────────────────────────────────
+// Discord redirects here after the user adds (or skips adding) the bot.
+// We don't need the code — just confirm and send them to the app.
+router.get('/discord/bot-invited', (req, res) => {
+    const appUrl   = buildAppUrl(req);
+    const guildId  = req.query.guild_id;
+
+    if (guildId) {
+        console.log(`[Auth/Discord] Bot added to guild: ${guildId}`);
+        req.session.botGuildId = guildId;
+    } else {
+        console.log('[Auth/Discord] Bot invite completed (no guild_id — user may have skipped)');
+    }
+
+    res.redirect(`${appUrl}?discord_connected=1`);
 });
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
