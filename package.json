@@ -11,7 +11,8 @@
             "frontend/packages/components-sdk",
             "backend",
             "database",
-            "discord-bot"
+            "discord-bot",
+            "electron"
         ]
     },
     "resolutions": {

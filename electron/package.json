@@ -1,0 +1,87 @@
+{
+    "name": "openembedded-desktop",
+    "version": "1.0.0",
+    "description": "OpenEmbedded — Discord UI Component Builder (Desktop)",
+    "main": "main.js",
+    "scripts": {
+        "start": "electron .",
+        "dev": "ELECTRON_DEV=1 electron .",
+        "build:win": "electron-builder --win",
+        "build:mac": "electron-builder --mac",
+        "build:linux": "electron-builder --linux",
+        "build": "electron-builder --linux"
+    },
+    "dependencies": {
+        "discord-rpc": "^4.0.1",
+        "dotenv": "^16.0.0"
+    },
+    "devDependencies": {
+        "electron": "^28.0.0",
+        "electron-builder": "^24.9.1"
+    },
+    "build": {
+        "appId": "com.openembedded.app",
+        "productName": "OpenEmbedded",
+        "copyright": "Copyright © 2024 OpenEmbedded",
+        "asar": true,
+        "files": [
+            "main.js",
+            "preload.js",
+            "rpc.js",
+            "dist/**/*",
+            "node_modules/**/*",
+            "!node_modules/electron-builder/**/*"
+        ],
+        "extraResources": [
+            {
+                "from": "../frontend/dist",
+                "to": "app",
+                "filter": [
+                    "**/*"
+                ]
+            }
+        ],
+        "win": {
+            "target": [
+                {
+                    "target": "nsis",
+                    "arch": [
+                        "x64"
+                    ]
+                }
+            ],
+            "icon": "assets/icon.ico"
+        },
+        "mac": {
+            "target": [
+                {
+                    "target": "dmg",
+                    "arch": [
+                        "x64",
+                        "arm64"
+                    ]
+                }
+            ],
+            "icon": "assets/icon.icns",
+            "category": "public.app-category.developer-tools"
+        },
+        "linux": {
+            "target": [
+                {
+                    "target": "AppImage",
+                    "arch": [
+                        "x64"
+                    ]
+                }
+            ],
+            "icon": "assets/icon.png",
+            "category": "Development"
+        },
+        "nsis": {
+            "oneClick": false,
+            "allowToChangeInstallationDirectory": true,
+            "createDesktopShortcut": true,
+            "createStartMenuShortcut": true
+        }
+    }
+}

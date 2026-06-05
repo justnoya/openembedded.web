@@ -22,6 +22,7 @@ import { ErrorFallback } from './ErrorFallback';
 import { DiscordCard } from './DiscordCard';
 import { useToast } from './Toast';
 import { useSeoMeta } from './useSeoMeta';
+import { useElectronActivity } from './useElectronActivity';
 
 webhookImplementation.init();
 
@@ -50,6 +51,7 @@ function App() {
     const [postTitle, setPostTitle] = useState<string>("");
     useHashRouter();
     useSeoMeta(page);
+    useElectronActivity(page);
 
     const setFile = useCallback(webhookImplementation.setFile, []);
     const getFile = useCallback(webhookImplementation.getFile, [])
