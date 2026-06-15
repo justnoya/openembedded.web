@@ -269,6 +269,28 @@ router.get('/guilds', async (req, res) => {
     }
 });
 
+// ── GET /api/auth/mock-login ──────────────────────────────────────────────────
+// Dev-only shortcut: creates a fake Discord session so you can test the full
+// app without setting up OAuth. Disabled in production.
+router.get('/mock-login', (req, res) => {
+    if (process.env.NODE_ENV === 'production')
+        return res.status(403).json({ error: 'Not available in production.' });
+
+    req.session.user = {
+        id:            '000000000000000001',
+        email:         'mock@openembedded.dev',
+        username:      'MockUser',
+        globalName:    'Mock User',
+        discriminator: '0',
+        avatar:        null,
+        provider:      'discord',
+    };
+
+    console.log('[Auth] Mock login — dev session created');
+    const appUrl = buildAppUrl(req);
+    res.redirect(`${appUrl}/?discord_connected=1`);
+});
+
 // ── POST /api/auth/logout ─────────────────────────────────────────────────────
 router.post('/logout', (req, res) => {
     if (req.session?.user?.provider === 'discord' && req.session.user.id) {

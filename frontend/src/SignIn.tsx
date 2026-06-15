@@ -4,6 +4,10 @@ import { InlineAlert } from './InlineAlert';
 
 type View = 'connecting' | 'discord-error';
 
+function mockLogin() {
+    window.location.href = '/api/auth/mock-login';
+}
+
 const DISCORD_ERRORS: Record<string, string> = {
     discord_denied: 'Discord sign-in was cancelled. Please try again.',
     discord_token:  'Discord sign-in failed. Please try again.',
@@ -27,7 +31,7 @@ export function SignIn() {
         setTimeout(() => { window.location.href = '/api/auth/discord'; }, 700);
     }
 
-    // On mount: check for OAuth error params, otherwise auto-start Discord login
+    // On mount: check for OAuth error params only — no longer auto-redirects
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         const errCode = params.get('error');
@@ -36,11 +40,7 @@ export function SignIn() {
             const msg = DISCORD_ERRORS[errCode] ?? `Sign-in error (${errCode}). Please try again.`;
             setDiscordError(msg);
             setView('discord-error');
-            return;
         }
-
-        // No error — auto-redirect to Discord
-        startDiscordLogin();
     }, []);
 
     const background = (
@@ -119,7 +119,7 @@ export function SignIn() {
         );
     }
 
-    // ── View: connecting (default / auto-redirect) ────────────────────────────
+    // ── View: sign-in (default) ───────────────────────────────────────────────
     return (
         <div className={Styles.page}>
             {background}
@@ -128,64 +128,108 @@ export function SignIn() {
                     0%, 100% { box-shadow: 0 0 0 0 rgba(88,101,242,0.5); }
                     50%       { box-shadow: 0 0 0 18px rgba(88,101,242,0); }
                 }
-                @keyframes oe-dc-spin {
-                    to { transform: rotate(360deg); }
-                }
+                @keyframes oe-dc-spin { to { transform: rotate(360deg); } }
                 @keyframes oe-dc-in {
                     from { opacity: 0; transform: translateY(12px) scale(0.97); }
                     to   { opacity: 1; transform: translateY(0) scale(1); }
                 }
             `}</style>
             <div className={Styles.card} style={{ animation: 'oe-dc-in 0.3s ease-out' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem', padding: '0.5rem 0 1rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem', padding: '0.5rem 0 0.5rem', width: '100%' }}>
+
+                    {/* Logo / icon */}
                     <div style={{
-                        width: '5rem', height: '5rem',
+                        width: '4.5rem', height: '4.5rem',
                         background: '#5865F2',
                         borderRadius: '50%',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        animation: 'oe-dc-pulse 1.8s ease-in-out infinite',
+                        animation: 'oe-dc-pulse 2.4s ease-in-out infinite',
                         color: 'white',
+                        flexShrink: 0,
                     }}>
-                        <span style={{ width: '2.4rem', height: '2.4rem' }}>
-                            {discordSvg}
-                        </span>
+                        <span style={{ width: '2.2rem', height: '2.2rem', display: 'flex' }}>{discordSvg}</span>
                     </div>
 
+                    {/* Heading */}
                     <div style={{ textAlign: 'center' }}>
-                        <h2 style={{ color: '#fff', margin: '0 0 0.5rem', fontSize: '1.2rem', fontWeight: 700, fontFamily: 'inherit' }}>
-                            Signing you in with Discord
+                        <h2 style={{ color: '#fff', margin: '0 0 0.4rem', fontSize: '1.25rem', fontWeight: 700, fontFamily: 'inherit' }}>
+                            Welcome to OpenEmbedded
                         </h2>
-                        <p style={{ color: '#b9bbbe', margin: 0, fontSize: '0.875rem' }}>
-                            Taking you to Discord to authorize your account…
+                        <p style={{ color: '#b9bbbe', margin: 0, fontSize: '0.9rem', lineHeight: 1.5 }}>
+                            Sign in with your Discord account to continue.
                         </p>
                     </div>
 
-                    <div style={{
-                        display: 'flex', alignItems: 'center', gap: '0.5rem',
-                        padding: '0.5rem 1.2rem',
-                        background: 'rgba(88,101,242,0.12)',
-                        border: '1px solid rgba(88,101,242,0.25)',
-                        borderRadius: '2rem',
-                        fontSize: '0.8rem',
-                        color: '#9ea3f2',
-                    }}>
-                        <div style={{
-                            width: '0.65rem', height: '0.65rem',
-                            border: '2px solid rgba(88,101,242,0.3)',
-                            borderTop: '2px solid #5865F2',
-                            borderRadius: '50%',
-                            animation: 'oe-dc-spin 0.8s linear infinite',
-                            flexShrink: 0,
-                        }} />
-                        Redirecting to discord.com
-                    </div>
+                    {/* Primary: Discord sign-in */}
+                    <button
+                        className={Styles.discordBtn}
+                        onClick={startDiscordLogin}
+                    >
+                        <span style={{ width: '1.1rem', height: '1.1rem', display: 'inline-flex' }}>{discordSvg}</span>
+                        Continue with Discord
+                    </button>
 
+                    {/* Legal */}
                     <p style={{ margin: 0, fontSize: '1.1rem', color: '#4f545c', textAlign: 'center', lineHeight: 1.5 }}>
                         By signing in you agree to our{' '}
                         <a href="/terms" style={{ color: '#00aff4', textDecoration: 'none' }}>Terms of Service</a>
                         {' '}and{' '}
                         <a href="/privacy" style={{ color: '#00aff4', textDecoration: 'none' }}>Privacy Policy</a>.
                     </p>
+
+                    {/* Dev mode divider + mock button */}
+                    <div style={{
+                        paddingTop: '1rem',
+                        borderTop: '1px solid rgba(255,255,255,0.06)',
+                        width: '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '0.6rem',
+                    }}>
+                        <span style={{ fontSize: '1.0rem', color: '#3d4049', letterSpacing: '0.05em', textTransform: 'uppercase', fontWeight: 700 }}>
+                            Dev Mode
+                        </span>
+                        <button
+                            onClick={mockLogin}
+                            style={{
+                                background: 'rgba(255,255,255,0.03)',
+                                border: '1px solid rgba(255,255,255,0.08)',
+                                borderRadius: '4px',
+                                color: '#5a5f6b',
+                                fontSize: '1.25rem',
+                                fontFamily: 'inherit',
+                                fontWeight: 500,
+                                padding: '0.65rem 1.4rem',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.55rem',
+                                transition: 'background 0.15s ease, color 0.15s ease, border-color 0.15s ease',
+                                width: '100%',
+                                justifyContent: 'center',
+                            }}
+                            onMouseEnter={e => {
+                                const b = e.currentTarget as HTMLButtonElement;
+                                b.style.background = 'rgba(255,255,255,0.07)';
+                                b.style.color = '#9ea3ad';
+                                b.style.borderColor = 'rgba(255,255,255,0.15)';
+                            }}
+                            onMouseLeave={e => {
+                                const b = e.currentTarget as HTMLButtonElement;
+                                b.style.background = 'rgba(255,255,255,0.03)';
+                                b.style.color = '#5a5f6b';
+                                b.style.borderColor = 'rgba(255,255,255,0.08)';
+                            }}
+                        >
+                            <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                                <rect x="1" y="3" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+                                <path d="M5 8l2.5 2.5L11 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                            Skip — continue as test user
+                        </button>
+                    </div>
+
                 </div>
             </div>
         </div>
