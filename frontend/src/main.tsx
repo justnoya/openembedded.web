@@ -369,14 +369,11 @@ function AuthGate() {
         );
     }
 
-    // Main app — choose layout based on path
-    const isV2 = window.location.pathname.replace(/\/$/, '') === '/v2';
-
     return (
         <Provider store={store}>
             <ButtonActionsProvider>
                 <ResponseBuilderProvider>
-                    {isV2 ? <BuilderV2 /> : <App />}
+                    <App />
                 </ResponseBuilderProvider>
             </ButtonActionsProvider>
         </Provider>
@@ -388,6 +385,19 @@ function Root() {
     const path = window.location.pathname.replace(/\/$/, '');
     if (path === '/terms')   return <TermsPage />;
     if (path === '/privacy') return <PrivacyPage />;
+    if (path === '/v2') {
+        return (
+            <ToastProvider>
+                <Provider store={store}>
+                    <ButtonActionsProvider>
+                        <ResponseBuilderProvider>
+                            <BuilderV2 />
+                        </ResponseBuilderProvider>
+                    </ButtonActionsProvider>
+                </Provider>
+            </ToastProvider>
+        );
+    }
     return (
         <ToastProvider>
             <AuthGate />

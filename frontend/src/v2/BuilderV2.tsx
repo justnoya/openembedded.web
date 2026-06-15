@@ -441,16 +441,15 @@ export function BuilderV2() {
             {/* ── Left Icon Rail ──────────────────────────────────────────── */}
             <nav className={Styles.rail}>
                 {panelTabs.map((tab, i) => (
-                    <>
-                        {i === 3 && <div key="sep" className={Styles.railSeparator} />}
+                    <React.Fragment key={tab.id}>
+                        {i === 3 && <div className={Styles.railSeparator} />}
                         <RailButton
-                            key={tab.id}
                             icon={tab.icon}
                             label={tab.label}
                             active={activePanel === tab.id}
                             onClick={() => setActivePanel(tab.id)}
                         />
-                    </>
+                    </React.Fragment>
                 ))}
             </nav>
 
