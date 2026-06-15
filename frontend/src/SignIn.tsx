@@ -1,8 +1,8 @@
-import { useState, FormEvent, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Styles from './SignIn.module.css';
 import { InlineAlert } from './InlineAlert';
 
-type View = 'login' | 'check-email' | 'verifying' | 'verify-error' | 'discord-connecting' | 'discord-error';
+type View = 'connecting' | 'discord-error';
 
 const DISCORD_ERRORS: Record<string, string> = {
     discord_denied: 'Discord sign-in was cancelled. Please try again.',
@@ -12,127 +12,36 @@ const DISCORD_ERRORS: Record<string, string> = {
     state_mismatch: 'Sign-in failed for security reasons. Please try again.',
 };
 
-export function SignIn() {
-    const [view, setView]         = useState<View>('login');
-    const [sentEmail, setSentEmail] = useState('');
-    const [email, setEmail]       = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError]       = useState('');
-    const [discordError, setDiscordError] = useState('');
-    const [loading, setLoading]   = useState(false);
-    const [resent, setResent]     = useState(false);
-    const [verifyError, setVerifyError] = useState('');
+const discordSvg = (
+    <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.03.056a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
+    </svg>
+);
 
-    // On mount — handle ?token=... (email verify) and ?error=... (Discord errors)
+export function SignIn() {
+    const [view, setView]               = useState<View>('connecting');
+    const [discordError, setDiscordError] = useState('');
+
+    function startDiscordLogin() {
+        setView('connecting');
+        setTimeout(() => { window.location.href = '/api/auth/discord'; }, 700);
+    }
+
+    // On mount: check for OAuth error params, otherwise auto-start Discord login
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
-
-        const token = params.get('token');
-        if (token) {
-            setView('verifying');
-            window.history.replaceState({}, '', window.location.pathname);
-            fetch(`/api/auth/verify?token=${encodeURIComponent(token)}`, { credentials: 'include' })
-                .then(async res => {
-                    const data = await res.json();
-                    if (res.ok && data.ok) {
-                        window.location.href = '/';
-                    } else {
-                        setVerifyError(data.error || 'Verification failed. Please sign in again.');
-                        setView('verify-error');
-                    }
-                })
-                .catch(() => {
-                    setVerifyError('Network error. Please try again.');
-                    setView('verify-error');
-                });
-            return;
-        }
-
         const errCode = params.get('error');
         if (errCode) {
             window.history.replaceState({}, '', window.location.pathname);
             const msg = DISCORD_ERRORS[errCode] ?? `Sign-in error (${errCode}). Please try again.`;
             setDiscordError(msg);
             setView('discord-error');
-        }
-    }, []);
-
-    async function handleSubmit(e: FormEvent) {
-        e.preventDefault();
-        setError('');
-
-        if (!email.trim() || !password) {
-            setError('Please fill in all fields.');
             return;
         }
 
-        setLoading(true);
-        try {
-            const res = await fetch('/api/auth/login', {
-                method:  'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({ email: email.trim(), password }),
-            });
-
-            const data = await res.json();
-
-            if (!res.ok) {
-                setError(data.error || 'Login failed. Please try again.');
-                return;
-            }
-
-            if (data.direct) {
-                window.location.reload();
-                return;
-            }
-
-            if (data.requiresVerification) {
-                setSentEmail(email.trim());
-                setView('check-email');
-                return;
-            }
-
-            window.location.reload();
-        } catch {
-            setError('Unable to connect. Please try again.');
-        } finally {
-            setLoading(false);
-        }
-    }
-
-    async function handleResend() {
-        setResent(false);
-        setLoading(true);
-        try {
-            const res = await fetch('/api/auth/resend', {
-                method:  'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({ email: sentEmail }),
-            });
-            if (res.ok) setResent(true);
-            else {
-                const data = await res.json();
-                setError(data.error || 'Failed to resend. Please try again.');
-            }
-        } catch {
-            setError('Unable to connect. Please try again.');
-        } finally {
-            setLoading(false);
-        }
-    }
-
-    function handleDiscordLogin() {
-        setView('discord-connecting');
-        setTimeout(() => { window.location.href = '/api/auth/discord'; }, 700);
-    }
-
-    const discordSvg = (
-        <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.03.056a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
-        </svg>
-    );
+        // No error — auto-redirect to Discord
+        startDiscordLogin();
+    }, []);
 
     const background = (
         <>
@@ -177,84 +86,6 @@ export function SignIn() {
         </>
     );
 
-    // ── View: discord-connecting ───────────────────────────────────────────────
-    if (view === 'discord-connecting') {
-        return (
-            <div className={Styles.page}>
-                {background}
-                <style>{`
-                    @keyframes oe-dc-pulse {
-                        0%, 100% { box-shadow: 0 0 0 0 rgba(88,101,242,0.5); }
-                        50%       { box-shadow: 0 0 0 18px rgba(88,101,242,0); }
-                    }
-                    @keyframes oe-dc-spin {
-                        to { transform: rotate(360deg); }
-                    }
-                    @keyframes oe-dc-in {
-                        from { opacity: 0; transform: translateY(12px) scale(0.97); }
-                        to   { opacity: 1; transform: translateY(0) scale(1); }
-                    }
-                `}</style>
-                <div className={Styles.card} style={{ animation: 'oe-dc-in 0.3s ease-out' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem', padding: '0.5rem 0 1rem' }}>
-                        <div style={{
-                            width: '5rem', height: '5rem',
-                            background: '#5865F2',
-                            borderRadius: '50%',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            animation: 'oe-dc-pulse 1.8s ease-in-out infinite',
-                            color: 'white',
-                        }}>
-                            <span style={{ width: '2.4rem', height: '2.4rem' }}>
-                                {discordSvg}
-                            </span>
-                        </div>
-
-                        <div style={{ textAlign: 'center' }}>
-                            <h2 style={{ color: '#fff', margin: '0 0 0.5rem', fontSize: '1.2rem', fontWeight: 700, fontFamily: 'inherit' }}>
-                                Connecting to Discord
-                            </h2>
-                            <p style={{ color: '#b9bbbe', margin: 0, fontSize: '0.875rem' }}>
-                                Taking you to Discord to authorize your account…
-                            </p>
-                        </div>
-
-                        <div style={{
-                            display: 'flex', alignItems: 'center', gap: '0.5rem',
-                            padding: '0.5rem 1.2rem',
-                            background: 'rgba(88,101,242,0.12)',
-                            border: '1px solid rgba(88,101,242,0.25)',
-                            borderRadius: '2rem',
-                            fontSize: '0.8rem',
-                            color: '#9ea3f2',
-                        }}>
-                            <div style={{
-                                width: '0.65rem', height: '0.65rem',
-                                border: '2px solid rgba(88,101,242,0.3)',
-                                borderTop: '2px solid #5865F2',
-                                borderRadius: '50%',
-                                animation: 'oe-dc-spin 0.8s linear infinite',
-                                flexShrink: 0,
-                            }} />
-                            Redirecting to discord.com
-                        </div>
-
-                        <button
-                            onClick={() => setView('login')}
-                            style={{
-                                background: 'none', border: 'none',
-                                color: '#72767d', cursor: 'pointer',
-                                fontSize: '0.8rem', padding: '0.25rem 0.5rem',
-                            }}
-                        >
-                            Cancel
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
     // ── View: discord-error ───────────────────────────────────────────────────
     if (view === 'discord-error') {
         return (
@@ -272,185 +103,90 @@ export function SignIn() {
                     <button
                         className={Styles.discordBtn}
                         style={{ marginTop: '1.5rem' }}
-                        onClick={handleDiscordLogin}
+                        onClick={startDiscordLogin}
                     >
                         <span style={{ width: '1.1rem', height: '1.1rem', display: 'inline-flex' }}>{discordSvg}</span>
                         Try again with Discord
                     </button>
-                    <button
-                        className={Styles.backBtn}
-                        onClick={() => { setView('login'); setDiscordError(''); }}
-                    >
-                        ← Back to sign in
-                    </button>
-                </div>
-            </div>
-        );
-    }
-
-    // ── View: verifying ───────────────────────────────────────────────────────
-    if (view === 'verifying') {
-        return (
-            <div className={Styles.page}>
-                {background}
-                <div className={Styles.card}>
-                    <div className={Styles.cardLogoWrap}>
-                        <img src="/logo.png" className={Styles.cardLogo} alt="OpenEmbedded" draggable={false} />
-                    </div>
-                    <div className={Styles.inboxIcon}>⏳</div>
-                    <h2 className={Styles.inboxTitle}>Verifying your login…</h2>
-                    <p className={Styles.inboxSubtitle}>Please wait a moment.</p>
-                </div>
-            </div>
-        );
-    }
-
-    // ── View: verify-error ────────────────────────────────────────────────────
-    if (view === 'verify-error') {
-        return (
-            <div className={Styles.page}>
-                {background}
-                <div className={Styles.card}>
-                    <div className={Styles.cardLogoWrap}>
-                        <img src="/logo.png" className={Styles.cardLogo} alt="OpenEmbedded" draggable={false} />
-                    </div>
-                    <div className={Styles.inboxIcon}>❌</div>
-                    <h2 className={Styles.inboxTitle}>Link expired</h2>
-                    <p className={Styles.inboxSubtitle}>{verifyError}</p>
-                    <button className={Styles.loginBtn} style={{ marginTop: '2rem' }} onClick={() => setView('login')}>
-                        Back to sign in
-                    </button>
-                </div>
-            </div>
-        );
-    }
-
-    // ── View: check-email ─────────────────────────────────────────────────────
-    if (view === 'check-email') {
-        return (
-            <div className={Styles.page}>
-                {background}
-                <div className={Styles.card}>
-                    <div className={Styles.cardLogoWrap}>
-                        <img src="/logo.png" className={Styles.cardLogo} alt="OpenEmbedded" draggable={false} />
-                    </div>
-
-                    <div className={Styles.inboxIcon}>✉️</div>
-                    <h2 className={Styles.inboxTitle}>Check your inbox</h2>
-                    <p className={Styles.inboxSubtitle}>
-                        We sent a verification link to<br />
-                        <strong className={Styles.inboxEmail}>{sentEmail}</strong>
+                    <p className={Styles.legal}>
+                        By signing in you agree to our{' '}
+                        <a href="/terms">Terms of Service</a>
+                        {' '}and{' '}
+                        <a href="/privacy">Privacy Policy</a>.
                     </p>
-
-                    <div className={Styles.inboxNote}>
-                        <span className={Styles.inboxNoteIcon}>⏱️</span>
-                        The link expires in <strong>30 minutes</strong>
-                    </div>
-
-                    {error && (
-                        <InlineAlert type="error" message={error} onDismiss={() => setError('')} className={Styles.formAlert} />
-                    )}
-
-                    {resent && (
-                        <InlineAlert type="success" message="Email resent! Check your inbox." onDismiss={() => setResent(false)} className={Styles.formAlert} />
-                    )}
-
-                    <button
-                        className={Styles.resendBtn}
-                        onClick={handleResend}
-                        disabled={loading}
-                    >
-                        {loading ? 'Sending…' : 'Resend email'}
-                    </button>
-
-                    <button
-                        className={Styles.backBtn}
-                        onClick={() => { setView('login'); setError(''); }}
-                    >
-                        ← Use a different account
-                    </button>
                 </div>
             </div>
         );
     }
 
-    // ── View: login (default) ─────────────────────────────────────────────────
+    // ── View: connecting (default / auto-redirect) ────────────────────────────
     return (
         <div className={Styles.page}>
             {background}
-
-            <div className={Styles.card}>
-                <div className={Styles.cardLogoWrap}>
-                    <img src="/logo.png" className={Styles.cardLogo} alt="OpenEmbedded" draggable={false} />
-                </div>
-
-                {error && (
-                    <InlineAlert
-                        type="error"
-                        message={error}
-                        onDismiss={() => setError('')}
-                        className={Styles.formAlert}
-                    />
-                )}
-
-                <form onSubmit={handleSubmit} noValidate className={Styles.form}>
-                    <div className={Styles.field}>
-                        <label className={Styles.label} htmlFor="email">EMAIL</label>
-                        <input
-                            id="email"
-                            className={Styles.input}
-                            type="email"
-                            autoComplete="email"
-                            value={email}
-                            onChange={e => setEmail(e.target.value)}
-                            disabled={loading}
-                            required
-                        />
+            <style>{`
+                @keyframes oe-dc-pulse {
+                    0%, 100% { box-shadow: 0 0 0 0 rgba(88,101,242,0.5); }
+                    50%       { box-shadow: 0 0 0 18px rgba(88,101,242,0); }
+                }
+                @keyframes oe-dc-spin {
+                    to { transform: rotate(360deg); }
+                }
+                @keyframes oe-dc-in {
+                    from { opacity: 0; transform: translateY(12px) scale(0.97); }
+                    to   { opacity: 1; transform: translateY(0) scale(1); }
+                }
+            `}</style>
+            <div className={Styles.card} style={{ animation: 'oe-dc-in 0.3s ease-out' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem', padding: '0.5rem 0 1rem' }}>
+                    <div style={{
+                        width: '5rem', height: '5rem',
+                        background: '#5865F2',
+                        borderRadius: '50%',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        animation: 'oe-dc-pulse 1.8s ease-in-out infinite',
+                        color: 'white',
+                    }}>
+                        <span style={{ width: '2.4rem', height: '2.4rem' }}>
+                            {discordSvg}
+                        </span>
                     </div>
 
-                    <div className={Styles.field}>
-                        <label className={Styles.label} htmlFor="password">PASSWORD</label>
-                        <input
-                            id="password"
-                            className={Styles.input}
-                            type="password"
-                            autoComplete="current-password"
-                            value={password}
-                            onChange={e => setPassword(e.target.value)}
-                            disabled={loading}
-                            required
-                        />
+                    <div style={{ textAlign: 'center' }}>
+                        <h2 style={{ color: '#fff', margin: '0 0 0.5rem', fontSize: '1.2rem', fontWeight: 700, fontFamily: 'inherit' }}>
+                            Signing you in with Discord
+                        </h2>
+                        <p style={{ color: '#b9bbbe', margin: 0, fontSize: '0.875rem' }}>
+                            Taking you to Discord to authorize your account…
+                        </p>
                     </div>
 
-                    <button className={Styles.loginBtn} type="submit" disabled={loading}>
-                        {loading ? 'Signing in…' : 'Log In'}
-                    </button>
-                </form>
+                    <div style={{
+                        display: 'flex', alignItems: 'center', gap: '0.5rem',
+                        padding: '0.5rem 1.2rem',
+                        background: 'rgba(88,101,242,0.12)',
+                        border: '1px solid rgba(88,101,242,0.25)',
+                        borderRadius: '2rem',
+                        fontSize: '0.8rem',
+                        color: '#9ea3f2',
+                    }}>
+                        <div style={{
+                            width: '0.65rem', height: '0.65rem',
+                            border: '2px solid rgba(88,101,242,0.3)',
+                            borderTop: '2px solid #5865F2',
+                            borderRadius: '50%',
+                            animation: 'oe-dc-spin 0.8s linear infinite',
+                            flexShrink: 0,
+                        }} />
+                        Redirecting to discord.com
+                    </div>
 
-                <div className={Styles.divider}>
-                    <span className={Styles.dividerLine} />
-                    <span className={Styles.dividerText}>or</span>
-                    <span className={Styles.dividerLine} />
+                    <p style={{ margin: 0, fontSize: '1.1rem', color: '#4f545c', textAlign: 'center', lineHeight: 1.5 }}>
+                        By signing in you agree to our{' '}
+                        <a href="/terms" style={{ color: '#00aff4', textDecoration: 'none' }}>Terms of Service</a>
+                        {' '}and{' '}
+                        <a href="/privacy" style={{ color: '#00aff4', textDecoration: 'none' }}>Privacy Policy</a>.
+                    </p>
                 </div>
-
-                <button
-                    className={Styles.discordBtn}
-                    type="button"
-                    onClick={handleDiscordLogin}
-                    disabled={loading}
-                >
-                    <svg className={Styles.discordIcon} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                        <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.03.056a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
-                    </svg>
-                    Continue with Discord
-                </button>
-
-                <p className={Styles.legal}>
-                    By signing in you agree to our{' '}
-                    <a href="/terms">Terms of Service</a>
-                    {' '}and{' '}
-                    <a href="/privacy">Privacy Policy</a>.
-                </p>
             </div>
         </div>
     );
