@@ -16,6 +16,7 @@ import { SignIn } from './SignIn';
 import { ToastProvider } from './Toast';
 import { TermsPage } from './TermsPage';
 import { PrivacyPage } from './PrivacyPage';
+import { BuilderV2 } from './v2/BuilderV2';
 
 // ── Shared keyframes ──────────────────────────────────────────────────────────
 const SHARED_STYLES = `
@@ -368,12 +369,14 @@ function AuthGate() {
         );
     }
 
-    // Main app
+    // Main app — choose layout based on path
+    const isV2 = window.location.pathname.replace(/\/$/, '') === '/v2';
+
     return (
         <Provider store={store}>
             <ButtonActionsProvider>
                 <ResponseBuilderProvider>
-                    <App />
+                    {isV2 ? <BuilderV2 /> : <App />}
                 </ResponseBuilderProvider>
             </ButtonActionsProvider>
         </Provider>
