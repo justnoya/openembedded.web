@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import Styles from './SignIn.module.css';
-import { InlineAlert } from './InlineAlert';
 
-type View = 'connecting' | 'discord-error';
+type View = 'idle' | 'connecting' | 'discord-error';
 
 const DISCORD_ERRORS: Record<string, string> = {
     discord_denied: 'Discord sign-in was cancelled. Please try again.',
@@ -19,15 +18,15 @@ const discordSvg = (
 );
 
 export function SignIn() {
-    const [view, setView]               = useState<View>('connecting');
+    const [view, setView]               = useState<View>('idle');
     const [discordError, setDiscordError] = useState('');
 
     function startDiscordLogin() {
         setView('connecting');
-        setTimeout(() => { window.location.href = '/api/auth/discord'; }, 700);
+        setTimeout(() => { window.location.href = '/api/auth/discord'; }, 600);
     }
 
-    // On mount: check for OAuth error params, otherwise auto-start Discord login
+    // On mount: only check for OAuth error params coming back from Discord
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         const errCode = params.get('error');
@@ -36,11 +35,7 @@ export function SignIn() {
             const msg = DISCORD_ERRORS[errCode] ?? `Sign-in error (${errCode}). Please try again.`;
             setDiscordError(msg);
             setView('discord-error');
-            return;
         }
-
-        // No error — auto-redirect to Discord
-        startDiscordLogin();
     }, []);
 
     const background = (
@@ -86,12 +81,25 @@ export function SignIn() {
         </>
     );
 
+    const styles = `
+        @keyframes oe-dc-pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(88,101,242,0.5); }
+            50%       { box-shadow: 0 0 0 18px rgba(88,101,242,0); }
+        }
+        @keyframes oe-dc-spin { to { transform: rotate(360deg); } }
+        @keyframes oe-dc-in {
+            from { opacity: 0; transform: translateY(10px) scale(0.97); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+    `;
+
     // ── View: discord-error ───────────────────────────────────────────────────
     if (view === 'discord-error') {
         return (
             <div className={Styles.page}>
                 {background}
-                <div className={Styles.card}>
+                <style>{styles}</style>
+                <div className={Styles.card} style={{ animation: 'oe-dc-in 0.3s ease-out' }}>
                     <div className={Styles.cardLogoWrap}>
                         <img src="/logo.png" className={Styles.cardLogo} alt="OpenEmbedded" draggable={false} />
                     </div>
@@ -100,11 +108,7 @@ export function SignIn() {
                     </div>
                     <h2 className={Styles.inboxTitle}>Discord sign-in failed</h2>
                     <p className={Styles.inboxSubtitle}>{discordError}</p>
-                    <button
-                        className={Styles.discordBtn}
-                        style={{ marginTop: '1.5rem' }}
-                        onClick={startDiscordLogin}
-                    >
+                    <button className={Styles.discordBtn} onClick={startDiscordLogin}>
                         <span style={{ width: '1.1rem', height: '1.1rem', display: 'inline-flex' }}>{discordSvg}</span>
                         Try again with Discord
                     </button>
@@ -119,74 +123,92 @@ export function SignIn() {
         );
     }
 
-    // ── View: connecting (default / auto-redirect) ────────────────────────────
+    // ── View: connecting (after button click) ─────────────────────────────────
+    if (view === 'connecting') {
+        return (
+            <div className={Styles.page}>
+                {background}
+                <style>{styles}</style>
+                <div className={Styles.card} style={{ animation: 'oe-dc-in 0.25s ease-out' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem', padding: '0.5rem 0 1rem' }}>
+                        <div style={{
+                            width: '5rem', height: '5rem',
+                            background: '#5865F2',
+                            borderRadius: '50%',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            animation: 'oe-dc-pulse 1.8s ease-in-out infinite',
+                            color: 'white',
+                        }}>
+                            <span style={{ width: '2.4rem', height: '2.4rem' }}>{discordSvg}</span>
+                        </div>
+
+                        <div style={{ textAlign: 'center' }}>
+                            <h2 style={{ color: '#fff', margin: '0 0 0.5rem', fontSize: '1.2rem', fontWeight: 700, fontFamily: 'inherit' }}>
+                                Signing you in with Discord
+                            </h2>
+                            <p style={{ color: '#b9bbbe', margin: 0, fontSize: '0.875rem' }}>
+                                Taking you to Discord to authorize your account…
+                            </p>
+                        </div>
+
+                        <div style={{
+                            display: 'flex', alignItems: 'center', gap: '0.5rem',
+                            padding: '0.5rem 1.2rem',
+                            background: 'rgba(88,101,242,0.12)',
+                            border: '1px solid rgba(88,101,242,0.25)',
+                            borderRadius: '2rem',
+                            fontSize: '0.8rem',
+                            color: '#9ea3f2',
+                        }}>
+                            <div style={{
+                                width: '0.65rem', height: '0.65rem',
+                                border: '2px solid rgba(88,101,242,0.3)',
+                                borderTop: '2px solid #5865F2',
+                                borderRadius: '50%',
+                                animation: 'oe-dc-spin 0.8s linear infinite',
+                                flexShrink: 0,
+                            }} />
+                            Redirecting to discord.com
+                        </div>
+
+                        <p style={{ margin: 0, fontSize: '1.1rem', color: '#4f545c', textAlign: 'center', lineHeight: 1.5 }}>
+                            By signing in you agree to our{' '}
+                            <a href="/terms" style={{ color: '#00aff4', textDecoration: 'none' }}>Terms of Service</a>
+                            {' '}and{' '}
+                            <a href="/privacy" style={{ color: '#00aff4', textDecoration: 'none' }}>Privacy Policy</a>.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // ── View: idle (default — show sign-in button) ────────────────────────────
     return (
         <div className={Styles.page}>
             {background}
-            <style>{`
-                @keyframes oe-dc-pulse {
-                    0%, 100% { box-shadow: 0 0 0 0 rgba(88,101,242,0.5); }
-                    50%       { box-shadow: 0 0 0 18px rgba(88,101,242,0); }
-                }
-                @keyframes oe-dc-spin {
-                    to { transform: rotate(360deg); }
-                }
-                @keyframes oe-dc-in {
-                    from { opacity: 0; transform: translateY(12px) scale(0.97); }
-                    to   { opacity: 1; transform: translateY(0) scale(1); }
-                }
-            `}</style>
-            <div className={Styles.card} style={{ animation: 'oe-dc-in 0.3s ease-out' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem', padding: '0.5rem 0 1rem' }}>
-                    <div style={{
-                        width: '5rem', height: '5rem',
-                        background: '#5865F2',
-                        borderRadius: '50%',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        animation: 'oe-dc-pulse 1.8s ease-in-out infinite',
-                        color: 'white',
-                    }}>
-                        <span style={{ width: '2.4rem', height: '2.4rem' }}>
-                            {discordSvg}
-                        </span>
-                    </div>
-
-                    <div style={{ textAlign: 'center' }}>
-                        <h2 style={{ color: '#fff', margin: '0 0 0.5rem', fontSize: '1.2rem', fontWeight: 700, fontFamily: 'inherit' }}>
-                            Signing you in with Discord
-                        </h2>
-                        <p style={{ color: '#b9bbbe', margin: 0, fontSize: '0.875rem' }}>
-                            Taking you to Discord to authorize your account…
-                        </p>
-                    </div>
-
-                    <div style={{
-                        display: 'flex', alignItems: 'center', gap: '0.5rem',
-                        padding: '0.5rem 1.2rem',
-                        background: 'rgba(88,101,242,0.12)',
-                        border: '1px solid rgba(88,101,242,0.25)',
-                        borderRadius: '2rem',
-                        fontSize: '0.8rem',
-                        color: '#9ea3f2',
-                    }}>
-                        <div style={{
-                            width: '0.65rem', height: '0.65rem',
-                            border: '2px solid rgba(88,101,242,0.3)',
-                            borderTop: '2px solid #5865F2',
-                            borderRadius: '50%',
-                            animation: 'oe-dc-spin 0.8s linear infinite',
-                            flexShrink: 0,
-                        }} />
-                        Redirecting to discord.com
-                    </div>
-
-                    <p style={{ margin: 0, fontSize: '1.1rem', color: '#4f545c', textAlign: 'center', lineHeight: 1.5 }}>
-                        By signing in you agree to our{' '}
-                        <a href="/terms" style={{ color: '#00aff4', textDecoration: 'none' }}>Terms of Service</a>
-                        {' '}and{' '}
-                        <a href="/privacy" style={{ color: '#00aff4', textDecoration: 'none' }}>Privacy Policy</a>.
-                    </p>
+            <style>{styles}</style>
+            <div className={Styles.card} style={{ animation: 'oe-dc-in 0.35s ease-out' }}>
+                <div className={Styles.cardLogoWrap}>
+                    <img src="/logo.png" className={Styles.cardLogo} alt="OpenEmbedded" draggable={false} />
                 </div>
+
+                <h2 className={Styles.inboxTitle} style={{ marginBottom: '0.4rem' }}>Welcome back</h2>
+                <p className={Styles.inboxSubtitle} style={{ marginBottom: '2rem' }}>
+                    Sign in with your Discord account to continue.
+                </p>
+
+                <button className={Styles.discordBtn} onClick={startDiscordLogin}>
+                    <span style={{ width: '1.1rem', height: '1.1rem', display: 'inline-flex' }}>{discordSvg}</span>
+                    Sign in with Discord
+                </button>
+
+                <p className={Styles.legal}>
+                    By signing in you agree to our{' '}
+                    <a href="/terms">Terms of Service</a>
+                    {' '}and{' '}
+                    <a href="/privacy">Privacy Policy</a>.
+                </p>
             </div>
         </div>
     );
