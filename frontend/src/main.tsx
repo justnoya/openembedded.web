@@ -346,7 +346,11 @@ function AuthGate() {
 
     if (isLoading) return <LoadingSpinner />;
 
-    if (!isAuthenticated) return <SignIn />;
+    if (!isAuthenticated) {
+        // Send unauthenticated visitors straight to the V2 builder (no login needed)
+        window.location.replace('/v2');
+        return null;
+    }
 
     // Show bot-invite screen (user already logged in, needs to invite bot)
     if (inviteBot) {
