@@ -49,6 +49,7 @@ function App() {
     const isDefault = useSelector((state: RootState) => state.display.isDefault);
     const [page, setPage] = useRouter();
     const [postTitle, setPostTitle] = useState<string>("");
+    const [sending, setSending] = useState(false);
     useHashRouter();
     useSeoMeta(page);
     useElectronActivity(page);
@@ -100,6 +101,7 @@ function App() {
     }, [threadId]);
 
     const sendMessage = async () => {
+        setSending(true);
         try {
             const req = await fetch(String(parsed_url), webhookImplementation.prepareRequest(state));
             const status_code = req.status;
@@ -117,12 +119,15 @@ function App() {
             dispatch(actions.setWebhookResponse(error_data));
         } catch {
             toast.error('Network error — could not reach Discord', 'Send failed');
+        } finally {
+            setSending(false);
         }
     }
 
     const sendMessageWithTitle = async () => {
         if (!postTitle) return;
         dialog.current?.close();
+        setSending(true);
         try {
             const req = await fetch(String(parsed_url), webhookImplementation.prepareRequest(state, postTitle));
             const status_code = req.status;
@@ -135,6 +140,8 @@ function App() {
             dispatch(actions.setWebhookResponse(error_data));
         } catch {
             toast.error('Network error — could not reach Discord', 'Send failed');
+        } finally {
+            setSending(false);
         }
     }
 
@@ -189,8 +196,15 @@ function App() {
                     <input className={Styles.input} placeholder={"Webhook link"} type="text" value={webhookUrl}
                            onChange={ev => dispatch(actions.setWebhookUrl(ev.target.value))}/>
                 </div>
-                <button className={Styles.button} disabled={parsed_url == null} onClick={sendMessage}>
-                    {t('webhook.send')}
+                <button
+                    className={`${Styles.button} ${sending ? Styles.buttonLoading : ''}`}
+                    disabled={parsed_url == null || sending}
+                    onClick={sendMessage}
+                >
+                    {sending
+                        ? <><span className={Styles.btnSpinner} />Sending…</>
+                        : t('webhook.send')
+                    }
                 </button>
             </div>
 

@@ -35,7 +35,6 @@ export default function ejsTemplatePlugin(options : {
         compileDebug: options.compileDebug,
         escape: "(markup => JSON.stringify(markup))",
       }).toString()
-      //console.log(compiled)
       return {
         code: baseCode + 'export default ' + compiled,
         map: null,

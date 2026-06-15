@@ -79,7 +79,10 @@
 }
 
 /* ── Base reset ── */
-html { font-size: 62.5%; }
+html {
+  font-size: 62.5%;
+  scroll-behavior: smooth;
+}
 
 body {
   margin: 0;
@@ -87,12 +90,23 @@ body {
   line-height: 1.5;
   -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   background-color: var(--bg-app);
   color: var(--text-normal);
   font-family: "Inter", "gg sans", Whitney, "Noto Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-size: 1.4rem;
   padding: 0;
   overflow-x: hidden;
+}
+
+@keyframes page-fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes oe-spin-global {
+  to { transform: rotate(360deg); }
 }
 
 *, ::after, ::before { box-sizing: border-box; }

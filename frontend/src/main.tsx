@@ -41,25 +41,51 @@ function LoadingSpinner() {
         <div style={{
             minHeight: '100vh',
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            background: '#202226',
+            background: '#1E1F22',
+            gap: '1.5rem',
+            animation: 'oe-fade-in 0.3s ease-out both',
         }}>
-            <style>{SHARED_STYLES}</style>
-            <div style={{ position: 'relative', width: '6rem', height: '6rem' }}>
+            <style>{SHARED_STYLES + `
+                @keyframes oe-fade-in { from { opacity: 0; } to { opacity: 1; } }
+                @keyframes oe-logo-pulse {
+                    0%, 100% { opacity: 0.9; transform: scale(1); }
+                    50%       { opacity: 1;   transform: scale(1.04); }
+                }
+            `}</style>
+            <div style={{ position: 'relative', width: '5.6rem', height: '5.6rem' }}>
+                {/* Outer track */}
                 <div style={{
                     position: 'absolute', inset: 0,
                     borderRadius: '50%',
-                    border: '8px solid rgba(88,101,242,0.2)',
+                    border: '3px solid rgba(88,101,242,0.15)',
                 }} />
+                {/* Spinning arc */}
                 <div style={{
                     position: 'absolute', inset: 0,
                     borderRadius: '50%',
-                    border: '8px solid transparent',
+                    border: '3px solid transparent',
                     borderTopColor: '#5865F2',
-                    borderRightColor: '#5865F2',
-                    animation: 'oe-spin 0.9s linear infinite',
+                    borderRightColor: 'rgba(88,101,242,0.4)',
+                    animation: 'oe-spin 0.85s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                 }} />
+                {/* Center logo */}
+                <div style={{
+                    position: 'absolute', inset: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    animation: 'oe-logo-pulse 2s ease-in-out infinite',
+                }}>
+                    <img src="/logo.png" style={{ width: '2.4rem', height: '2.4rem', objectFit: 'contain' }} alt="" />
+                </div>
+            </div>
+            <div style={{
+                fontSize: '1.3rem', color: 'rgba(255,255,255,0.3)',
+                fontFamily: 'Inter, sans-serif', letterSpacing: '0.02em',
+                animation: 'oe-fade-in 0.3s 0.15s ease-out both',
+            }}>
+                Loading…
             </div>
         </div>
     );

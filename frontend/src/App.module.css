@@ -200,10 +200,15 @@
   cursor: pointer;
   text-align: center;
   user-select: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
   transition:
     background var(--t-fast) var(--ease-default),
     transform var(--t-fast) var(--ease-default),
-    box-shadow var(--t-fast) var(--ease-default);
+    box-shadow var(--t-fast) var(--ease-default),
+    opacity var(--t-fast) var(--ease-default);
 
   &:hover {
     background: var(--discord-blurple-hover);
@@ -212,7 +217,7 @@
 
   &:active {
     background: var(--discord-blurple-active);
-    transform: translateY(1px);
+    transform: translateY(1px) scale(0.98);
     box-shadow: none;
   }
 
@@ -223,6 +228,27 @@
     opacity: 0.5;
     transform: none;
   }
+}
+
+.buttonLoading {
+  cursor: wait !important;
+  pointer-events: none;
+  opacity: 0.85 !important;
+}
+
+.btnSpinner {
+  display: inline-block;
+  width: 1.1em;
+  height: 1.1em;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: btnSpin 0.65s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes btnSpin {
+  to { transform: rotate(360deg); }
 }
 
 /* ── Modal dialog (forum post title, etc.) ── */

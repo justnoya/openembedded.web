@@ -33,10 +33,8 @@ const __deleteKeyHelper = (
 const __mutateDeleteKey = (addIndex: number, key: stateKeyType, deleteKey: stateKeyType | null) => {
     if (deleteKey === null) return;
 
-    // console.debug('[ADDKEY] Equality check = ', key, !!deleteKey && deleteKey.slice(0, key.length));
     if (arraysEqual(key, deleteKey.slice(0, key.length))) {
         const deleteIndex = deleteKey[key.length] as number | any;
-        // console.debug('[ADDKEY] Index check = ', addIndex, deleteIndex);
 
         if (typeof deleteIndex === "number" && addIndex <= deleteIndex) {
             deleteKey[key.length] = deleteIndex + 1;
@@ -118,9 +116,6 @@ export const displaySlice = createSlice({
 
             __mutateDeleteKey(action.payload.index, key, deleteKey);
             __mutateDeleteKey(action.payload.index, key, deleteKeyParent);
-
-            // console.debug('[ADDKEY] TO ADD = ', key, action.payload.index, action.payload.value);
-            // console.debug('[ADDKEY] TO DELETE = ', deleteKey);
 
             let current: any = state;
 
@@ -208,27 +203,22 @@ export class DisplaySliceManager implements StateManager {
 
     deleteKey(props: deleteKeyType) {
         this.dispatch(displaySlice.actions.deleteKey(props));
-        // console.log("deleteKey", props);
     }
 
     appendKey<T>(props: appendKeyType<T>) {
         this.dispatch(displaySlice.actions.appendKey(props));
-        // console.log("appendKey", props);
     }
 
     addKey<T>(props: addKeyType<T>) {
         this.dispatch(displaySlice.actions.addKey(props));
-        // console.log("addKey", props);
     }
 
     setKey<T>(props: setKeyType<T>) {
         this.dispatch(displaySlice.actions.setKey(props));
-        // console.log("setKey", props);
     }
 
     wrapKey<T>(props: wrapKeyType<T>) {
         this.dispatch(displaySlice.actions.wrapKey(props));
-        // console.log("wrapKey", props);
     }
 }
 
